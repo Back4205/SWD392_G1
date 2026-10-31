@@ -1,0 +1,6 @@
+@EWMS.Api_HostAddress = http://localhost:5215
+
+GET {{EWMS.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,5 +1,10 @@
+using EWMS.Api.Data;
+using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddDbContext<EWMSDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("EWMSDatabase")
+    ));
 // Add services to the container.
 
 builder.Services.AddControllers();

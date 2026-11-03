@@ -1,4 +1,4 @@
-﻿
+
 namespace EWMS.Api.Entities
 {
     public class SerialNumber
@@ -24,5 +24,9 @@ namespace EWMS.Api.Entities
         public GoodsReceiptItem? OriginGoodsReceiptItem { get; set; }
 
         public StorageBin? CurrentBin { get; set; }
+
+        public OutboundRequestItem? ReservedForOutboundItem { get; set; }
+
+        public DeliveryOrderItem? DispatchedInDeliveryItem { get; set; }
     }
 }

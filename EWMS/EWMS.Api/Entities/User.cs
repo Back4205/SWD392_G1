@@ -1,4 +1,4 @@
-﻿
+
 namespace EWMS.Api.Entities
 {
     public class User
@@ -18,5 +18,7 @@ namespace EWMS.Api.Entities
         public string? PhoneNumber { get; set; }
 
         public string Status { get; set; } = string.Empty;
+
+        public Role Role { get; set; } = null!;
     }
 }

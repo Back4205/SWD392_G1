@@ -1,0 +1,131 @@
+
+.supplier-commitment-card {
+    background: #fff;
+    border: 1px solid #e6ebf2;
+    border-radius: 16px;
+    box-shadow: 0 6px 25px rgba(25, 47, 89, 0.04);
+    padding: 28px;
+    margin-bottom: 22px;
+}
+
+.supplier-commitment-heading {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 26px;
+}
+
+.supplier-commitment-step {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: 13px;
+    background: #eaf1ff;
+    color: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+}
+
+.supplier-commitment-heading h2 {
+    font-size: 19px;
+    margin: 0 0 7px;
+    color: #172b4d;
+}
+
+.supplier-commitment-heading p {
+    color: #8b98ad;
+    font-size: 13px;
+    margin: 0;
+}
+
+.supplier-commitment-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.supplier-commitment-field {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+    .supplier-commitment-field label {
+        font-size: 13px;
+        font-weight: 700;
+        color: #52647f;
+    }
+
+    .supplier-commitment-field input,
+    .supplier-commitment-field select {
+        width: 100%;
+        padding: 13px 14px;
+        border: 1px solid #dce4ef;
+        border-radius: 10px;
+        background: #fff;
+        color: #172b4d;
+        font: inherit;
+        font-size: 14px;
+        outline: none;
+    }
+
+        .supplier-commitment-field input:focus,
+        .supplier-commitment-field select:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+.supplier-commitment-error,
+.supplier-commitment-success {
+    padding: 13px 16px;
+    border-radius: 10px;
+    margin-top: 20px;
+    font-size: 13px;
+}
+
+.supplier-commitment-error {
+    background: #fff0ef;
+    color: #b42318;
+}
+
+.supplier-commitment-success {
+    background: #ecfdf3;
+    color: #067647;
+}
+
+.supplier-commitment-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+    .supplier-commitment-actions button {
+        background: #2563eb;
+        border: none;
+        border-radius: 10px;
+        padding: 13px 22px;
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+        .supplier-commitment-actions button:hover:not(:disabled) {
+            background: #1d4ed8;
+        }
+
+        .supplier-commitment-actions button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+@media (max-width: 700px) {
+    .supplier-commitment-card {
+        padding: 18px;
+    }
+
+    .supplier-commitment-grid {
+        grid-template-columns: 1fr;
+    }
+}

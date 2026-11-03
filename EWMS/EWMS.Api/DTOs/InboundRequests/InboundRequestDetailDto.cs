@@ -1,0 +1,38 @@
+﻿
+namespace EWMS.Api.DTOs.InboundRequests
+{
+    public class InboundRequestDetailDto
+    {
+        public int Id { get; set; }
+
+        public int WarehouseId { get; set; }
+
+        public int? SupplierId { get; set; }
+
+        public int RequestedByUserId { get; set; }
+
+        public int? ApprovedByUserId { get; set; }
+
+        public string? SupplierCommitmentStatus { get; set; }
+
+        public DateTime? ExpectedDeliveryDate { get; set; }
+
+        public string? RejectionReason { get; set; }
+
+        public string Status { get; set; } = string.Empty;
+
+        public DateTime CreatedDate { get; set; }
+
+        public List<InboundRequestDetailItemDto> Items { get; set; }
+            = new();
+    }
+
+    public class InboundRequestDetailItemDto
+    {
+        public int Id { get; set; }
+
+        public int ProductVariantId { get; set; }
+
+        public int ExpectedQty { get; set; }
+    }
+}

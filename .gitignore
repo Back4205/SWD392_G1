@@ -3,7 +3,7 @@
 **/obj/
 **/node_modules/
 **/dist/
-
+NGUOI_5_GOODS_RECEIPT_AGENT_GUIDE.md
 *.user
 *.suo
 

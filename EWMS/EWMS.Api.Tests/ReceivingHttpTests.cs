@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using System.Diagnostics;
 using System.Text.Json;
@@ -26,7 +26,7 @@ public class ReceivingHttpTests
     private readonly SqlServerFixture _fixture;
     public ReceivingHttpTests(SqlServerFixture fixture) { _fixture = fixture; }
 
-    private async Task<WebApplication> StartAsync(string environment = "Development")
+    internal async Task<WebApplication> StartAsync(string environment = "Development")
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
@@ -36,7 +36,7 @@ public class ReceivingHttpTests
         builder.Logging.ClearProviders();
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["GoodsReceipts:UseDevelopmentUserHeader"] = "true"
+            ["Authentication:SigningKey"] = "Tests-Only-Signing-Key-At-Least-32-Bytes-42!"
         });
         builder.Services.AddDbContext<EWMSDbContext>(options => options.UseSqlServer(_fixture.ConnectionString));
         builder.Services.AddControllers().AddApplicationPart(typeof(GoodsReceiptController).Assembly);
@@ -44,19 +44,23 @@ public class ReceivingHttpTests
         builder.Services.AddScoped<GoodsReceiptService>();
         builder.Services.AddScoped<SerialNumberService>();
         builder.Services.AddScoped<GoodsReceiptApprovalService>();
-        builder.Services.AddScoped<IStockService, MockStockService>();
+        builder.Services.AddScoped<IStockService, StockReceivingService>();
         builder.Services.AddScoped<IInboundService, InboundReceivingService>();
         builder.Services.AddScoped<IInboundRequestRepository, InboundRequestRepository>();
         builder.Services.AddScoped<IInboundRequestService, InboundRequestService>();
+        builder.Services.AddEwmsAuthentication(builder.Configuration, builder.Environment);
         var app = builder.Build();
+        app.UseDeveloperExceptionPage();
+        app.UseAuthentication();
         app.UseAuthorization();
+        app.UseRateLimiter();
         app.MapControllers();
         app.Urls.Add("http://127.0.0.1:0");
         await app.StartAsync();
         return app;
     }
 
-    private static HttpClient Client(WebApplication app)
+    internal static HttpClient Client(WebApplication app)
     {
         string address = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single();
         return new HttpClient { BaseAddress = new Uri(address) };
@@ -68,11 +72,7 @@ public class ReceivingHttpTests
         var data = await _fixture.SeedAsync(expected: 2);
         await using var app = await StartAsync();
         using var client = Client(app);
-        void User(int id)
-        {
-            client.DefaultRequestHeaders.Remove("X-Development-UserId");
-            client.DefaultRequestHeaders.Add("X-Development-UserId", id.ToString());
-        }
+        async Task User(int id) { await TestLoginAsync(client, id); }
         async Task Error(HttpResponseMessage response, HttpStatusCode expected, string? code = null)
         {
             string body = await response.Content.ReadAsStringAsync();
@@ -90,8 +90,8 @@ public class ReceivingHttpTests
             return JsonSerializer.Deserialize<T>(body, new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
         }
 
-        await Error(await client.GetAsync("/api/goods-receipts"), HttpStatusCode.Unauthorized, "GR_UNAUTHENTICATED");
-        User(data.StaffId);
+        await Error(await client.GetAsync("/api/goods-receipts"), HttpStatusCode.Unauthorized, "AUTH_REQUIRED");
+        await User(data.StaffId);
         await Error(await client.PostAsJsonAsync("/api/goods-receipts", new { inboundRequestId = 0 }), HttpStatusCode.BadRequest);
         await Error(await client.PostAsJsonAsync("/api/goods-receipts", new { inboundRequestId = data.InboundId, receivedByUserId = data.ManagerId }), HttpStatusCode.BadRequest);
         var receipt = await Read<GoodsReceiptDetailDto>(await client.PostAsJsonAsync("/api/goods-receipts",
@@ -122,14 +122,14 @@ public class ReceivingHttpTests
             Assert.False(await context.SerialNumbers.AnyAsync(x => x.ProductVariantId == data.VariantId));
         }
         await Error(await client.PostAsJsonAsync(route + "/approve", new ReceiptVersionDto { ExpectedVersion = receipt.Version }), HttpStatusCode.Forbidden);
-        User(data.ManagerId);
+        await User(data.ManagerId);
         var pending = await Read<GoodsReceiptListDto>(await client.GetAsync("/api/goods-receipts?status=PendingApproval"));
         Assert.Contains(pending.Items, x => x.Id == receipt.Id);
         receipt = await Read<GoodsReceiptDetailDto>(await client.PostAsJsonAsync(route + "/approve", new ReceiptVersionDto { ExpectedVersion = receipt.Version }));
         Assert.Equal("Approved", receipt.Status);
         await Error(await client.PostAsJsonAsync(route + "/approve", new ReceiptVersionDto { ExpectedVersion = receipt.Version }), HttpStatusCode.Conflict);
 
-        User(data.StaffId);
+        await User(data.StaffId);
         var second = await Read<GoodsReceiptDetailDto>(await client.PostAsJsonAsync("/api/goods-receipts",
             new CreateGoodsReceiptDto { InboundRequestId = data.InboundId }), HttpStatusCode.Created);
         string secondRoute = "/api/goods-receipts/" + second.Id;
@@ -139,7 +139,7 @@ public class ReceivingHttpTests
         second = await Read<GoodsReceiptDetailDto>(await client.PutAsJsonAsync(secondRoute,
             new UpdateGoodsReceiptDto { ExpectedVersion = scan.Version, Items = new List<UpdateReceiptBinDto> { new() { ItemId = secondItem, BinId = data.BinId } } }));
         second = await Read<GoodsReceiptDetailDto>(await client.PostAsJsonAsync(secondRoute + "/submit", new ReceiptVersionDto { ExpectedVersion = second.Version }));
-        User(data.ManagerId);
+        await User(data.ManagerId);
         await Error(await client.PostAsJsonAsync(secondRoute + "/reject", new RejectGoodsReceiptDto { ExpectedVersion = second.Version, Reason = " " }), HttpStatusCode.BadRequest);
         second = await Read<GoodsReceiptDetailDto>(await client.PostAsJsonAsync(secondRoute + "/reject",
             new RejectGoodsReceiptDto { ExpectedVersion = second.Version, Reason = "Thiếu phụ kiện" }));
@@ -171,7 +171,7 @@ public class ReceivingHttpTests
         await using (var firstApp = await StartAsync())
         {
             using var client = Client(firstApp);
-            client.DefaultRequestHeaders.Add("X-Development-UserId", data.StaffId.ToString());
+            await TestLoginAsync(client, data.StaffId);
             var created = await client.PostAsJsonAsync("/api/goods-receipts",
                 new CreateGoodsReceiptDto { InboundRequestId = data.InboundId });
             Assert.Equal(HttpStatusCode.Created, created.StatusCode);
@@ -193,7 +193,7 @@ public class ReceivingHttpTests
         }
         await using var secondApp = await StartAsync();
         using var restartedClient = Client(secondApp);
-        restartedClient.DefaultRequestHeaders.Add("X-Development-UserId", data.StaffId.ToString());
+        await TestLoginAsync(restartedClient, data.StaffId);
         var reloaded = await restartedClient.GetFromJsonAsync<GoodsReceiptDetailDto>("/api/goods-receipts/" + receiptId);
         Assert.NotNull(reloaded);
         Assert.Equal(version, reloaded.Version);
@@ -209,7 +209,7 @@ public class ReceivingHttpTests
     [Theory]
     [InlineData("Production")]
     [InlineData("Staging")]
-    public async Task GR38_ActualProgramRefusesToStartWithUnintegratedStockMock(string environment)
+    public async Task ActualProgramRequiresExternalSigningKeyOutsideDevelopment(string environment)
     {
         var start = new ProcessStartInfo("dotnet")
         {
@@ -221,7 +221,7 @@ public class ReceivingHttpTests
         start.ArgumentList.Add(typeof(GoodsReceiptController).Assembly.Location);
         start.Environment["ASPNETCORE_ENVIRONMENT"] = environment;
         start.Environment["DOTNET_ENVIRONMENT"] = environment;
-        start.Environment["GoodsReceipts__UseDevelopmentUserHeader"] = "true";
+        start.Environment.Remove("Authentication__SigningKey");
         start.Environment["ConnectionStrings__EWMSDatabase"] = _fixture.ConnectionString;
         using var process = Process.Start(start)!;
         var output = process.StandardOutput.ReadToEndAsync();
@@ -232,11 +232,18 @@ public class ReceivingHttpTests
             await process.WaitForExitAsync(timeout.Token);
             string text = await output + await errors;
             Assert.NotEqual(0, process.ExitCode);
-            Assert.Contains("Register the real IStockService", text);
+            Assert.Contains("Authentication:SigningKey", text);
         }
         finally
         {
             if (!process.HasExited) process.Kill(true);
         }
     }
+    private async Task TestLoginAsync(HttpClient client, int userId)
+    {
+        using var context = _fixture.CreateContext();
+        var userName = await context.Users.Where(x => x.Id == userId).Select(x => x.UserName).SingleAsync();
+        await AuthTestHelper.LoginAsync(client, userName);
+    }
+
 }

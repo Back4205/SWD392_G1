@@ -15,6 +15,9 @@ namespace EWMS.Api.Entities
 
         public string? SupplierCommitmentStatus { get; set; }
 
+        // Bảng kê dự kiến do Purchasing xác nhận; không phải hàng đã nhập kho.
+        public bool HasSupplierManifest { get; set; }
+
         public DateTime? ExpectedDeliveryDate { get; set; }
 
         public string? RejectionReason { get; set; }

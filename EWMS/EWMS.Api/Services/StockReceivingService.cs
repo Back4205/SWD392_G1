@@ -1,4 +1,4 @@
-﻿using EWMS.Api.Common;
+using EWMS.Api.Common;
 using EWMS.Api.Data;
 using EWMS.Api.Entities;
 using EWMS.Api.Interfaces;
@@ -6,13 +6,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EWMS.Api.Services
 {
-    // Thay tạm module Người 2. Mock này có ghi SQL để demo Stock/rollback thật.
-    // Chỉ đăng ký trong Development; khi tích hợp thay bằng StockService của nhóm.
-    public class MockStockService : IStockService
+    // Kiểm tra sức chứa và cộng tồn trong cùng transaction duyệt phiếu.
+    public class StockReceivingService : IStockService
     {
         private readonly EWMSDbContext _context;
 
-        public MockStockService(EWMSDbContext context)
+        public StockReceivingService(EWMSDbContext context)
         {
             _context = context;
         }

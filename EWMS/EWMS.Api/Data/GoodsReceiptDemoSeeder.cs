@@ -1,4 +1,5 @@
-﻿using EWMS.Api.Entities;
+using EWMS.Api.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
@@ -103,6 +104,46 @@ namespace EWMS.Api.Data
                 context.Stocks.Add(new Stock { ProductVariantId = variant.Id, BinId = binB.Id, OnHandQty = 1, ReservedQty = 0 });
                 await context.SaveChangesAsync();
             }
+            // Cấp mật khẩu thật, chỉ cho tài khoản bootstrap trong database local riêng.
+            // Không ghi mật khẩu vào source, log hoặc trả về API.
+            string? initialPassword = Environment.GetEnvironmentVariable("DevelopmentData__InitialPassword");
+            bool resetPasswords = Environment.GetEnvironmentVariable("DevelopmentData__ResetPasswords") == "true";
+            var localUsers = await context.Users.Where(x => x.UserName.StartsWith("gr-demo-") ||
+                x.UserName == "manager" || x.UserName == "staff" || x.UserName == "purchasing" ||
+                x.UserName == "staff-other" || x.UserName == "staff-inactive").ToListAsync();
+            var hasher = new PasswordHasher<User>();
+            foreach (var user in localUsers)
+            {
+                bool needsPassword = user.PasswordHash == "DEVELOPMENT-HEADER-ONLY-NOT-A-LOGIN-HASH" || resetPasswords;
+                if (needsPassword)
+                {
+                    if (string.IsNullOrEmpty(initialPassword) || initialPassword.Length < 12 || initialPassword.Length > 128)
+                        throw new InvalidOperationException("Supply DevelopmentData__InitialPassword (12-128 characters) to initialize local accounts.");
+                    user.PasswordHash = hasher.HashPassword(user, initialPassword);
+                }
+                // Schema User.FullName hiện tại là varchar(100) theo database của nhóm.
+                // Tên bootstrap dùng ASCII để SQL không làm mất dấu; nhãn role trên web vẫn tiếng Việt.
+                if (user.UserName == "gr-demo-manager") { user.UserName = "manager"; user.FullName = "Quan ly kho"; }
+                if (user.UserName == "gr-demo-staff") { user.UserName = "staff"; user.FullName = "Nhan vien nhan hang"; }
+                if (user.UserName == "gr-demo-purchasing") { user.UserName = "purchasing"; user.FullName = "Quan ly mua hang"; }
+                if (user.UserName == "gr-demo-other-staff") { user.UserName = "staff-other"; user.FullName = "Nhan vien kho B"; }
+                if (user.UserName == "gr-demo-inactive") { user.UserName = "staff-inactive"; user.FullName = "Tai khoan ngung hoat dong"; }
+                // Sửa tên bootstrap đã mất dấu ở lần khởi tạo trước; không đổi tên được nhập hợp lệ.
+                if (user.FullName.Contains('?'))
+                {
+                    if (user.UserName == "manager") user.FullName = "Quan ly kho";
+                    if (user.UserName == "staff") user.FullName = "Nhan vien nhan hang";
+                    if (user.UserName == "purchasing") user.FullName = "Quan ly mua hang";
+                    if (user.UserName == "staff-other") user.FullName = "Nhan vien kho B";
+                    if (user.UserName == "staff-inactive") user.FullName = "Tai khoan ngung hoat dong";
+                }
+            }
+            if (resetPasswords)
+            {
+                var sessions = await context.AuthSessions.Where(x => x.RevokedAt == null && localUsers.Select(u => u.Id).Contains(x.UserId)).ToListAsync();
+                foreach (var session in sessions) session.RevokedAt = DateTime.UtcNow;
+            }
+            await context.SaveChangesAsync();
             await transaction.CommitAsync();
             // Chỉ log ID demo, không log mật khẩu/connection string.
             var actors = await context.Users.Where(x => x.UserName.StartsWith("gr-demo-"))

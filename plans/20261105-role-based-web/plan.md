@@ -1,6 +1,6 @@
 ---
 title: Web EWMS phân khu theo role và đăng nhập thật
-status: in-progress
+status: completed
 created: 2026-11-05
 scope: role-based-web
 ---
@@ -28,12 +28,14 @@ RP2 3.1/3.7.2.1/3.7.3 quy định username/password → kiểm tra user/Active/h
 
 ## Checklist
 
-1. [ ] JWT/password/session/CSRF/rate limit, login/logout/me/password change và tests thật.
-2. [ ] Loại bypass/header/hardcode, phân quyền+warehouse scope API, Stock receiving DI thật.
-3. [ ] Login và session lifecycle; layout/menu/routes riêng Staff/Manager/Purchasing.
-4. [ ] Chuyển Receipt/Inbound sang đúng trang role và request xác thực chung, profile/password, không demo UI.
-5. [ ] Bootstrap tài khoản local an toàn, cập nhật start-dev/env/hướng dẫn.
-6. [ ] SQL/HTTP tests, browser login từng role, URL/API forbidden, stale/receiving/reject/logout/expired/mobile.
-7. [ ] Review, build, cập nhật docs/plan/journal, không claim deployment chưa thực hiện.
+1. [x] JWT/password/session/CSRF/rate limit, login/logout/me/password change và tests thật.
+2. [x] Loại bypass/header/hardcode, phân quyền+warehouse scope API, Stock receiving DI thật.
+3. [x] Login và session lifecycle; layout/menu/routes riêng Staff/Manager/Purchasing.
+4. [x] Chuyển Receipt/Inbound sang đúng trang role và request xác thực chung, profile/password, không demo UI.
+5. [x] Bootstrap tài khoản local an toàn, cập nhật start-dev/env/hướng dẫn.
+6. [x] SQL/HTTP tests, browser login từng role, URL/API forbidden, stale/receiving/reject/logout/expired/mobile.
+7. [x] Review, build, cập nhật docs/plan/journal, không claim deployment chưa thực hiện.
+
+Đã hoàn tất phạm vi. [Báo cáo kiểm chứng](reports/verification-20261105.md): 61/61 SQL/HTTP tests, React build/lint, browser qua ba role và chu trình Inbound/Receipt. Kết quả stale/concurrency/transaction được kiểm tra trong SQL/HTTP suite; các luồng UI nhận hai đợt, từ chối và vòng đời đăng nhập được kiểm tra trên Chrome. Hướng dẫn chạy hiện tại: [role-based-web](../../docs/role-based-web.md). Hai kế hoạch Backend/React trước đó được giữ làm lịch sử hoàn thành, không thay đổi phạm vi của chúng.
 
 Hướng triển khai Auth bám hướng dẫn Microsoft chính thức về JWT validation, password hashing và antiforgery. Không dùng cookie-only identity thay cho JWT trong SDS; cookie chỉ là cách lưu/chuyển JWT.

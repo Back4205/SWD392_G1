@@ -22,24 +22,12 @@ builder.Services.AddScoped<SerialNumberService>();
 builder.Services.AddScoped<GoodsReceiptApprovalService>();
 builder.Services.AddScoped<IInboundService, InboundReceivingService>();
 
-// Người 2 chưa có StockService: dùng bản thay thế chỉ ở môi trường Development.
-// Khi ghép nhóm, thay dòng đăng ký này bằng IStockService, StockService thật.
-if (builder.Environment.IsDevelopment())
-{
-    builder.Services.AddScoped<IStockService, MockStockService>();
-}
-else
-{
-    throw new InvalidOperationException("Register the real IStockService before running Goods Receipt outside Development.");
-}
-
-// Chặn cấu hình giả lập user/seed khi chạy ngoài môi trường Development.
-bool developmentHeader = builder.Configuration.GetValue<bool>("GoodsReceipts:UseDevelopmentUserHeader");
+// Cộng tồn bằng SQL thật, dùng chung DbContext và transaction duyệt phiếu.
+builder.Services.AddScoped<IStockService, StockReceivingService>();
+builder.Services.AddEwmsAuthentication(builder.Configuration, builder.Environment);
 bool developmentSeed = builder.Configuration.GetValue<bool>("GoodsReceipts:SeedDevelopmentData");
-if (!builder.Environment.IsDevelopment() && (developmentHeader || developmentSeed))
-{
-    throw new InvalidOperationException("Goods receipt development settings are forbidden outside Development.");
-}
+if (!builder.Environment.IsDevelopment() && developmentSeed)
+    throw new InvalidOperationException("Development seeding is forbidden outside Development.");
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -63,8 +51,22 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// Có thể đặt bản React build vào wwwroot để chạy cùng API.
+bool hasFrontend = File.Exists(Path.Combine(app.Environment.WebRootPath
+    ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot"), "index.html"));
+if (hasFrontend)
+{
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+}
+
+app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapControllers();
+// API lạ phải trả 404; chỉ URL trang React mới được trả về index.html.
+app.MapFallback("/api/{**path}", () => Results.NotFound(new { message = "API endpoint not found." }));
+if (hasFrontend) app.MapFallbackToFile("index.html");
 
 app.Run();

@@ -7,10 +7,12 @@ import type { GoodsReceipt, ReceiptBin, ReceiptSession } from "./goodsReceipt.ty
 import { formatReceiptDate, isStaleReceipt, receiptErrorMessage } from "./receipt.helpers";
 import ReceiptStatusBadge from "./ReceiptStatusBadge";
 import ReceiptDecisionDialog from "./ReceiptDecisionDialog";
-import { navigateTo } from "../../hooks/useHashRoute";
+import ReceiptSerialComparison from "./ReceiptSerialComparison";
+import { navigateTo } from "../../hooks/useAppRoute";
 
 interface Props {
   receiptId: number;
+  basePath: string;
   session: ReceiptSession;
   busy: boolean;
   onBusyChange: (busy: boolean) => void;
@@ -22,7 +24,7 @@ function getSavedBins(receipt: GoodsReceipt) {
   return values;
 }
 
-export default function GoodsReceiptDetailPage({ receiptId, session, busy, onBusyChange }: Props) {
+export default function GoodsReceiptDetailPage({ receiptId, session, busy, onBusyChange, basePath }: Props) {
   const [receipt, setReceipt] = useState<GoodsReceipt | null>(null);
   const [bins, setBins] = useState<ReceiptBin[]>([]);
   const [binChoices, setBinChoices] = useState<Record<number, number | null>>({});
@@ -172,10 +174,10 @@ export default function GoodsReceiptDetailPage({ receiptId, session, busy, onBus
   }
 
   if (loading) return <div className="gr-panel gr-empty" role="status">Đang tải chi tiết phiếu…</div>;
-  if (!receipt) return <section className="gr-panel gr-empty"><h1>Chưa tải được phiếu</h1><p role="alert">{error}</p><div className="gr-inline-actions"><button className="gr-button gr-button--secondary" onClick={() => setReloadKey(value => value + 1)}>Thử lại</button><button className="gr-button gr-button--quiet" onClick={() => navigateTo("/goods-receipts")}>Về danh sách</button></div></section>;
+  if (!receipt) return <section className="gr-panel gr-empty"><h1>Chưa tải được phiếu</h1><p role="alert">{error}</p><div className="gr-inline-actions"><button className="gr-button gr-button--secondary" onClick={() => setReloadKey(value => value + 1)}>Thử lại</button><button className="gr-button gr-button--quiet" onClick={() => navigateTo(basePath)}>Về danh sách</button></div></section>;
 
   return <>
-    <button className="gr-back-link" disabled={busy} onClick={() => navigateTo("/goods-receipts")}>← Danh sách phiếu nhận</button>
+    <button className="gr-back-link" disabled={busy} onClick={() => navigateTo(basePath)}>← Danh sách phiếu nhận</button>
     <header className="gr-page-heading"><div><p className="gr-eyebrow">CHI TIẾT PHIẾU NHẬN</p><div className="gr-title-line"><h1>GR-{String(receipt.id).padStart(4, "0")}</h1><ReceiptStatusBadge status={receipt.status} /></div>
       <p>Inbound #{receipt.inboundRequestId} <span className="gr-separator">/</span> Kho #{receipt.warehouseId} <span className="gr-separator">/</span> {formatReceiptDate(receipt.receivedDate)}</p></div>
       <div className="gr-quantity"><strong>{quantity}</strong><span>thiết bị đã quét</span></div>
@@ -193,6 +195,8 @@ export default function GoodsReceiptDetailPage({ receiptId, session, busy, onBus
     {receipt.status === "Rejected" && <div className="gr-alert gr-alert--error"><strong>Lý do từ chối</strong><p>{receipt.rejectionReason}</p></div>}
     {receipt.status === "Approved" && <div className="gr-alert gr-alert--success">Phiếu đã được duyệt {receipt.decisionDate && `lúc ${formatReceiptDate(receipt.decisionDate)}`}. Hàng đã được nhập kho.</div>}
     {receipt.status === "Draft" && !editable && <div className="gr-alert gr-alert--info">Chế độ chỉ xem. Chỉ nhân viên tạo phiếu mới được chỉnh sửa bản nháp.</div>}
+
+    <ReceiptSerialComparison receipt={receipt} />
 
     {editable && <section className="gr-scan-panel" aria-labelledby="gr-scan-title">
       <div><p className="gr-eyebrow">NHẬN TỪNG THIẾT BỊ</p><h2 id="gr-scan-title">Quét Serial / IMEI</h2><p>Chọn đúng sản phẩm, quét mã và nhấn Enter. Mỗi mã hợp lệ được tính một thiết bị.</p></div>

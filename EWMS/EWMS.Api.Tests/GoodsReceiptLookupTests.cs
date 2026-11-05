@@ -169,7 +169,7 @@ public class GoodsReceiptLookupTests
         builder.Logging.ClearProviders();
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["GoodsReceipts:UseDevelopmentUserHeader"] = "true"
+            ["Authentication:SigningKey"] = "Tests-Only-Signing-Key-At-Least-32-Bytes-42!"
         });
         builder.Services.AddDbContext<EWMSDbContext>(options => options.UseSqlServer(_fixture.ConnectionString));
         builder.Services.AddControllers().AddApplicationPart(typeof(GoodsReceiptController).Assembly);
@@ -177,9 +177,14 @@ public class GoodsReceiptLookupTests
         builder.Services.AddScoped<GoodsReceiptService>();
         builder.Services.AddScoped<SerialNumberService>();
         builder.Services.AddScoped<GoodsReceiptApprovalService>();
-        builder.Services.AddScoped<IStockService, MockStockService>();
+        builder.Services.AddScoped<IStockService, StockReceivingService>();
         builder.Services.AddScoped<IInboundService, InboundReceivingService>();
+        builder.Services.AddEwmsAuthentication(builder.Configuration, builder.Environment);
         await using var app = builder.Build();
+        app.UseDeveloperExceptionPage();
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.UseRateLimiter();
         app.MapControllers();
         app.Urls.Add("http://127.0.0.1:0");
         await app.StartAsync();
@@ -189,7 +194,8 @@ public class GoodsReceiptLookupTests
         {
             Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/goods-receipts/" + route)).StatusCode);
         }
-        client.DefaultRequestHeaders.Add("X-Development-UserId", data.StaffId.ToString());
+        using var db = _fixture.CreateContext();
+        await AuthTestHelper.LoginAsync(client, (await db.Users.FindAsync(data.StaffId))!.UserName);
         var actor = await client.GetFromJsonAsync<GoodsReceiptSessionDto>("/api/goods-receipts/session");
         Assert.Equal(data.StaffId, actor!.UserId);
         Assert.Equal("Warehouse Staff", actor.Role);
@@ -199,8 +205,7 @@ public class GoodsReceiptLookupTests
         Assert.Equal(2, bins!.Count);
         Assert.Equal(HttpStatusCode.Forbidden,
             (await client.GetAsync("/api/goods-receipts/lookups/bins?warehouseId=" + data.OtherWarehouseId)).StatusCode);
-        client.DefaultRequestHeaders.Remove("X-Development-UserId");
-        client.DefaultRequestHeaders.Add("X-Development-UserId", data.ManagerId.ToString());
+        await AuthTestHelper.LoginAsync(client, (await db.Users.FindAsync(data.ManagerId))!.UserName);
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/goods-receipts/lookups/inbounds")).StatusCode);
         await app.StopAsync();
     }

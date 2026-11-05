@@ -11,3 +11,5 @@
 **/.env.*
 !**/.env.example
 **/appsettings.Development.json
+# Local signing keys and process logs
+**/.local/

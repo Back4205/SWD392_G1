@@ -12,6 +12,7 @@ namespace EWMS.Api.DTOs.GoodsReceipts
         public int? DecidedByUserId { get; set; }
         public DateTime? DecisionDate { get; set; }
         public string? RejectionReason { get; set; }
+        public bool HasSupplierManifest { get; set; }
         public List<GoodsReceiptItemDto> Items { get; set; } = new List<GoodsReceiptItemDto>();
     }
 
@@ -26,6 +27,16 @@ namespace EWMS.Api.DTOs.GoodsReceipts
         public int ApprovedReceivedQty { get; set; }
         public int RemainingQty { get; set; }
         public List<ReceiptSerialDto> Serials { get; set; } = new List<ReceiptSerialDto>();
+        public List<ExpectedReceiptSerialDto> ExpectedSerials { get; set; } = new List<ExpectedReceiptSerialDto>();
+    }
+
+    // Danh sách nhà cung cấp khai báo, kèm trạng thái đối chiếu; không phải tồn kho.
+    public class ExpectedReceiptSerialDto
+    {
+        public string SerialCode { get; set; } = string.Empty;
+        public string Status { get; set; } = "AwaitingReceipt";
+        public int? ReceiptId { get; set; }
+        public string? ScannedSerialCode { get; set; }
     }
 
     public class ReceiptSerialDto

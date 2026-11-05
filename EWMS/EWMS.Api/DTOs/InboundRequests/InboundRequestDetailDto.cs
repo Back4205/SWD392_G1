@@ -15,6 +15,8 @@ namespace EWMS.Api.DTOs.InboundRequests
 
         public string? SupplierCommitmentStatus { get; set; }
 
+        public bool HasSupplierManifest { get; set; }
+
         public DateTime? ExpectedDeliveryDate { get; set; }
 
         public string? RejectionReason { get; set; }
@@ -34,5 +36,9 @@ namespace EWMS.Api.DTOs.InboundRequests
         public int ProductVariantId { get; set; }
 
         public int ExpectedQty { get; set; }
+
+        public string SKU { get; set; } = string.Empty;
+        public string ProductName { get; set; } = string.Empty;
+        public List<string> ExpectedSerials { get; set; } = new();
     }
 }

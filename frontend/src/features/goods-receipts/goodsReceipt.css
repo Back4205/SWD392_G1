@@ -1,4 +1,25 @@
 /* CSS riêng module nhận hàng, dùng tiền tố gr- để không đè giao diện Inbound. */
+.gr-comparison { margin-bottom: 24px; }
+.gr-comparison .gr-panel-heading { align-items: flex-start; }
+.gr-comparison .gr-eyebrow { margin-bottom: 10px; }
+.gr-comparison-legacy { padding: 24px; margin-bottom: 24px; }
+.gr-comparison-legacy p { margin-top: 10px; color: #6b7b90; font-size: 13px; }
+.gr-comparison-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 0 24px 20px; }
+.gr-comparison-metrics > div { background: #f5f8fd; padding: 15px; border-radius: 8px; display: grid; gap: 8px; }
+.gr-comparison-metrics span { color: #687b95; font-size: 11px; }
+.gr-comparison-metrics strong { color: #233f67; font-size: 24px; }
+.gr-comparison-filters { display: grid; grid-template-columns: 1fr 240px; gap: 16px; padding: 0 24px 22px; }
+.gr-comparison-table code { font-size: 12px; overflow-wrap: anywhere; }
+.gr-compare-badge { display: inline-block; padding: 5px 9px; border-radius: 5px; font-size: 11px; white-space: nowrap; background: #f0f3f7; color: #63758d; }
+.gr-compare-badge--ScannedThisReceipt { background: #eaf2ff; color: #245ac9; }
+.gr-compare-badge--Received { background: #e7f4ee; color: #267052; }
+.gr-compare-badge--ScannedOtherReceipt { background: #fff3dd; color: #886015; }
+.gr-compare-badge--Rejected { background: #fff0f0; color: #af3838; }
+.gr-comparison-note { padding: 18px 24px; font-size: 12px; color: #697c95; border-top: 1px solid #edf0f5; }
+@media (max-width: 760px) {
+  .gr-comparison-metrics { grid-template-columns: 1fr 1fr; padding-inline: 16px; }
+  .gr-comparison-filters { grid-template-columns: 1fr; padding-inline: 16px; }
+}
 .gr-workspace {
   color: #233650;
   font-size: 14px;
@@ -28,25 +49,6 @@
   display: flex;
   align-items: center;
   gap: 20px;
-}
-
-.gr-demo-selector {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  color: #65758a;
-  font-size: 11px;
-  letter-spacing: 0;
-}
-
-.gr-demo-selector select {
-  border: 1px solid #dce4ee;
-  border-radius: 7px;
-  padding: 8px;
-  background: #f8fafd;
-  color: #345174;
-  font-size: 12px;
-  min-height: 38px;
 }
 
 .gr-user-label {
@@ -919,9 +921,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .gr-demo-selector > span {
-    display: none;
-  }
 }
 
 @media (max-width: 760px) {
@@ -941,14 +940,6 @@
     width: 100%;
     justify-content: space-between;
     gap: 10px;
-  }
-  .gr-demo-selector {
-    display: block !important;
-  }
-  .gr-demo-selector select {
-    font-size: 16px;
-    padding-block: 9px;
-    max-width: 220px;
   }
   .gr-user-label strong {
     display: none;

@@ -153,6 +153,49 @@
   min-width: 0;
 }
 
+.app-nav-item { text-decoration: none; }
+.app-brand-mark { font-size: 26px; font-weight: 800; }
+.portal-topbar { min-height: 84px; background: white; border-bottom: 1px solid #e4eaf1; padding: 18px 32px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.portal-topbar > div:first-child { display: grid; gap: 5px; }
+.portal-topbar small { color: #697b94; font-size: 11px; }
+.portal-topbar strong { color: #223a5c; font-size: 14px; }
+.portal-topbar .gr-user-label strong { display: block; max-width: 190px; }
+.app-loading { min-height: 100dvh; padding: 32px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; text-align: center; }
+.app-loading > strong { font-size: 44px; color: #245ac9; }
+.auth-layout { min-height: 100dvh; display: grid; grid-template-columns: 1fr 1fr; background: white; }
+.auth-intro { padding: 52px 64px; display: flex; flex-direction: column; justify-content: space-between; gap: 64px; color: white; background: #15345d; background-image: linear-gradient(135deg, transparent 60%, #1e4775 60%, #1e4775 61%, transparent 61%); }
+.auth-wordmark { text-decoration: none; color: white; font-size: 36px; letter-spacing: -2px; font-weight: 800; }
+.auth-wordmark span { color: #70b0ff; }
+.auth-eyebrow { font-size: 10px; letter-spacing: 1.8px; color: #adc9eb; }
+.auth-intro h1 { font-size: clamp(32px, 3.5vw, 54px); line-height: 1.2; letter-spacing: -1.5px; margin: 24px 0; font-weight: 650; }
+.auth-intro p:not(.auth-eyebrow) { color: #c7d6e8; line-height: 1.8; max-width: 420px; font-size: 15px; }
+.auth-intro > small { font-size: 10px; letter-spacing: 1.1px; color: #a9bfdb; }
+.auth-flow { display: flex; gap: 30px; padding-top: 40px; color: #8fb6e5; font-size: 13px; line-height: 2; }
+.auth-flow span { border-top: 1px solid #45648b; padding-top: 12px; flex: 1; }
+.auth-flow strong { color: white; font-size: 14px; font-weight: 500; }
+.auth-form-area { display: grid; place-items: center; padding: 48px; }
+.auth-form-card { width: min(100%, 400px); }
+.auth-form-card h2 { color: #182f4e; font-size: 34px; letter-spacing: -1px; margin: 16px 0 12px; }
+.auth-form-card > p:not(.gr-eyebrow) { color: #6c7b8e; font-size: 14px; line-height: 1.7; }
+.auth-form { display: grid; gap: 22px; margin-top: 30px; }
+.auth-form label { display: grid; gap: 9px; font-size: 13px; font-weight: 600; color: #33465e; }
+.auth-form label small { font-weight: 400; color: #68798d; }
+.auth-form input { width: 100%; min-width: 0; min-height: 46px; padding: 11px 13px; border: 1px solid #cbd6e4; border-radius: 7px; background: white; font: inherit; color: #223855; }
+.auth-form input:focus { outline: 2px solid #a8c9ff; outline-offset: 1px; border-color: #3874d7; }
+.auth-form > button { min-height: 46px; justify-content: center; }
+.auth-password { display: flex; position: relative; }
+.auth-password input { padding-right: 60px; }
+.auth-password button { position: absolute; right: 8px; top: 7px; padding: 8px; border: 0; background: transparent; color: #3567ad; cursor: pointer; }
+.auth-help { margin-top: 28px; }
+.auth-protection { border-top: 1px solid #e5ebf2; margin-top: 30px; padding-top: 22px; font-size: 11px; line-height: 1.7; color: #7b8999; }
+.profile-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px; align-items: start; }
+.profile-card { padding: 26px; }
+.profile-card h2 { font-size: 18px; margin-bottom: 20px; }
+.profile-card p { font-size: 13px; line-height: 1.8; color: #65768b; }
+.profile-card dl { display: grid; gap: 12px; }
+.profile-card dt { color: #77859a; font-size: 12px; margin-top: 12px; }
+.profile-card dd { margin: 0; color: #223a5c; font-size: 14px; overflow-wrap: anywhere; }
+
 .app-skip-link {
   position: fixed;
   left: 12px;
@@ -185,6 +228,16 @@
 }
 
 @media (max-width: 760px) {
+  .auth-layout { grid-template-columns: 1fr; }
+  .auth-intro { padding: 24px; gap: 26px; }
+  .auth-intro h1 { font-size: 30px; margin: 12px 0; }
+  .auth-intro > small, .auth-flow { display: none; }
+  .auth-form-area { padding: 32px 24px 48px; }
+  .profile-grid { grid-template-columns: 1fr; }
+  .portal-topbar { padding: 16px; flex-wrap: wrap; }
+  .portal-topbar > div:first-child { display: none; }
+  .portal-topbar .gr-user-label { width: 100%; }
+  .portal-logout { margin-left: auto; }
   .app-shell {
     display: block;
   }

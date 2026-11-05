@@ -1,83 +1,77 @@
-﻿# EWMS Frontend
+# EWMS Frontend
 
-React 18 + TypeScript + Vite cho hệ thống quản lý kho thiết bị điện tử. Có hai khu vực:
+React 18 + TypeScript + Vite cho nghiệp vụ nhập kho. Người dùng đăng nhập bằng tài khoản thật; menu, URL và thao tác được chia theo vai trò. API kiểm tra lại quyền và kho được phân công trên từng request.
 
-- **Yêu cầu nhập kho:** các màn hình Inbound của nhóm.
-- **Phiếu nhận hàng:** tạo Draft, scan Serial/IMEI, chọn bin, gửi duyệt và Manager approve/reject.
+## Chạy local
 
-Giao diện gọi Backend .NET thật. Quy tắc quyền, số lượng, remaining và cập nhật tồn kho được kiểm tra ở server.
+Cần .NET 8 SDK, SQL Server local, `dotnet-ef` 8.x và Node.js/npm phù hợp với `package-lock.json`. Từ thư mục gốc repository:
 
-## Chạy nhanh
+```powershell
+.\start-dev.cmd
+```
 
-Cần Backend đã chạy ở `http://localhost:5085` với database demo riêng. Xem [các lệnh Backend đầy đủ](../docs/goods-receipt-frontend.md#1-chạy-bằng-hai-terminal).
+File `.cmd` gọi PowerShell riêng để chạy `start-dev.ps1`, dùng được khi terminal VS Code chặn chạy trực tiếp `.ps1`. Không thay đổi Execution Policy của máy. CMD dùng `start-dev.cmd` khi đang ở thư mục gốc repository.
 
-Từ thư mục `frontend`, dùng PowerShell:
+Script build Backend, cập nhật database riêng `EWMS_GoodsReceipt_Development`, khởi tạo dữ liệu local và chạy API/React. Lần đầu nhập mật khẩu 12–128 ký tự tại lời nhắc. Các lần sau nhấn Enter để giữ mật khẩu hiện tại.
+
+Mở `http://127.0.0.1:5173/login`. Tài khoản local:
+
+| Tên đăng nhập | Vai trò | Trang mặc định |
+|---|---|---|
+| `staff` | Nhân viên kho | `/staff/receipts` |
+| `manager` | Quản lý kho | `/manager/approvals` |
+| `purchasing` | Quản lý mua hàng | `/purchasing/inbound-requests` |
+
+Mật khẩu là giá trị người chạy đã chọn; source và giao diện không có mật khẩu mặc định. Để đặt lại mật khẩu local: dừng ứng dụng rồi chạy `.\start-dev.cmd -ResetPasswords`. Việc này thu hồi các phiên của tài khoản local, giữ dữ liệu nhập hàng.
+
+Dừng hai tiến trình do script tạo:
+
+```powershell
+.\stop-dev.cmd
+```
+
+Log nằm ở `.local/`. Script không sửa `appsettings.json` của nhóm. Nếu một cổng đã có ứng dụng khác dùng, dừng ứng dụng đó trước; script không tự dừng tiến trình lạ.
+
+## Chạy React riêng
+
+Khi Backend đã chạy tại `http://localhost:5085`, từ thư mục `frontend`:
 
 ```powershell
 npm.cmd ci
-
-if (-not (Test-Path .env.local)) {
-    Copy-Item .env.example .env.local
-}
-
+Copy-Item .env.example .env.local
 npm.cmd run dev -- --host 127.0.0.1 --port 5173
 ```
 
-Mở `http://127.0.0.1:5173/`. Dùng `npm.cmd` trên Windows nếu `npm.ps1` bị chặn; không cần đổi Execution Policy.
-
-`.env.local` dùng cấu hình mẫu:
+Trên Windows dùng `npm.cmd` nếu `npm.ps1` bị chặn. `.env.local` chỉ cần:
 
 ```dotenv
 VITE_API_PROXY_TARGET=http://localhost:5085
-VITE_RECEIVING_DEMO_ENABLED=true
-VITE_RECEIVING_STAFF_ID=2
-VITE_RECEIVING_MANAGER_ID=1
 ```
 
-Vite proxy `/api` sang Backend. Sau khi sửa `.env.local`, khởi động lại Vite. ID Staff/Manager cần khớp log seeder ở database đang dùng.
-
-Backend phải có `ASPNETCORE_ENVIRONMENT=Development`, `GoodsReceipts__UseDevelopmentUserHeader=true` và dataset demo. Không bật chế độ giả lập cho production. Role thật vẫn do API session trả về và Backend kiểm tra.
+Vite proxy `/api` sang Backend. Khởi động lại Vite sau khi đổi cấu hình. Cookie đăng nhập do Backend cấp; không có cấu hình chọn actor hoặc gửi user ID giả lập.
 
 ## Đọc source
 
-```text
-src/
-  App.tsx                         # Shell và điều hướng hai module
-  hooks/useHashRoute.ts            # Theo dõi URL sau dấu #
-  features/
-    inbound/                      # UI Inbound đã có
-    goods-receipts/
-      goodsReceipt.types.ts       # Interface khớp DTO Backend
-      goodsReceipt.api.ts         # Fetch + các API cụ thể
-      GoodsReceiptWorkspace.tsx   # Session, actor demo, chọn trang
-      GoodsReceiptListPage.tsx    # Danh sách, lọc, phân trang
-      CreateGoodsReceiptPage.tsx  # Chọn Inbound và tạo nháp
-      GoodsReceiptDetailPage.tsx  # Scan/bin/save/submit/review
-      ReceiptDecisionDialog.tsx   # Xác nhận duyệt/từ chối
-      receipt.helpers.ts         # Nhãn trạng thái, lỗi, ngày giờ
-      goodsReceipt.css           # CSS riêng module
-```
+| File/thư mục | Trách nhiệm |
+|---|---|
+| `src/App.tsx` | Tải phiên đăng nhập, bảo vệ route, tạo menu theo role và đăng xuất |
+| `src/hooks/useAppRoute.ts` | URL thật, back/forward bằng History API |
+| `src/api/http.ts` | Fetch chung, cookie, CSRF và xử lý hết phiên |
+| `src/features/auth/` | Đăng nhập, hồ sơ và đổi mật khẩu |
+| `src/features/inbound/` | Tạo, xem, cam kết nhà cung cấp, duyệt và tiến độ Inbound |
+| `src/features/goods-receipts/` | Tạo Draft, scan Serial/IMEI, chọn bin, submit và Manager approve/reject |
 
-Code dùng component, `useState`, `useEffect`, `useRef`, `fetch` và CSS thường. Không thêm thư viện router, UI hoặc state management.
+Code dùng component thường, `useState`, `useEffect`, `useRef`, `fetch` và CSS; không thêm thư viện router hoặc state management.
 
-Các URL chính:
-
-- `/#/goods-receipts`: danh sách phiếu.
-- `/#/goods-receipts/new`: tạo nháp.
-- `/#/goods-receipts/123`: chi tiết phiếu có ID 123.
-- `/#/goods-receipts?status=PendingApproval`: phiếu chờ Manager.
-- `/#/inbound`: module Inbound.
-
-## Build và kiểm tra
+## Kiểm tra
 
 ```powershell
+npm.cmd run lint
 npm.cmd run build
 ```
 
-Lệnh chạy TypeScript rồi tạo bản build trong `dist/`. Bộ chọn actor demo bị tắt trong bản build production bởi `import.meta.env.DEV`. Auth và Stock thật của nhóm vẫn cần được tích hợp trước khi triển khai toàn hệ thống.
+TypeScript/Vite build và ESLint qua. Backend đã qua 80/80 test SQL/HTTP: 61 ca Auth/Receipt cũ và 19 ca bảng kê/đối chiếu mới. Chi tiết quyền, phiên đăng nhập và giới hạn tích hợp: [Web theo role](../docs/role-based-web.md). Luồng Receipt và thứ tự đọc component: [Frontend Goods Receipt](../docs/goods-receipt-frontend.md).
 
-## Hướng dẫn nghiệp vụ và demo
+## Bảng kê hàng nhà cung cấp
 
-Đọc [React Goods Receipt — hướng dẫn đọc, chạy và demo](../docs/goods-receipt-frontend.md) để xem thứ tự đọc code, kịch bản nhận 8 rồi 2, reject, lỗi version và kết quả kiểm thử.
-
-Chi tiết API/transaction/migration: [hướng dẫn Backend](../docs/goods-receipt-backend.md).
+Purchasing phải nhập đủ serial cho từng SKU khi xác nhận cung cấp. SKU và số lượng lấy từ kế hoạch Manager; serial nhập mỗi mã một dòng. Manager chỉ duyệt Inbound mới sau khi bảng kê hợp lệ. Staff quét thiết bị thực tế, xem bảng so sánh dự kiến/thực nhận; mã ngoài bảng kê hoặc sai SKU bị chặn, không tăng số lượng. Chỉ Manager duyệt Receipt mới cộng tồn. Xem [hướng dẫn bảng kê và đối chiếu](../docs/supplier-serial-reconciliation.md).

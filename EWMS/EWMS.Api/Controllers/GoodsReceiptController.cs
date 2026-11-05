@@ -1,34 +1,31 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using EWMS.Api.Common;
 using EWMS.Api.DTOs.GoodsReceipts;
 using EWMS.Api.Interfaces;
 using EWMS.Api.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace EWMS.Api.Controllers
 {
     [ApiController]
+    [Authorize(Roles = "Warehouse Staff,Manager")]
     [Route("api/goods-receipts")]
     public class GoodsReceiptController : ControllerBase
     {
         private readonly IGoodsReceiptService _service;
         private readonly SerialNumberService _serialService;
         private readonly GoodsReceiptApprovalService _approvalService;
-        private readonly IWebHostEnvironment _environment;
-        private readonly IConfiguration _configuration;
         private readonly ILogger<GoodsReceiptController> _logger;
 
         public GoodsReceiptController(IGoodsReceiptService service, SerialNumberService serialService,
-            GoodsReceiptApprovalService approvalService, IWebHostEnvironment environment,
-            IConfiguration configuration, ILogger<GoodsReceiptController> logger)
+            GoodsReceiptApprovalService approvalService, ILogger<GoodsReceiptController> logger)
         {
             _service = service;
             _serialService = serialService;
             _approvalService = approvalService;
-            _environment = environment;
-            _configuration = configuration;
             _logger = logger;
         }
 
@@ -196,28 +193,11 @@ namespace EWMS.Api.Controllers
 
         private int GetUserId()
         {
-            // Khi Người 3 ghép Auth: lấy ID từ principal đã được xác thực.
-            if (User.Identity != null && User.Identity.IsAuthenticated)
-            {
-                string? value = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-                if (int.TryParse(value, out int userId) && userId > 0)
-                {
-                    return userId;
-                }
-            }
-            // Chỉ demo local: ID vẫn phải tồn tại/active và đúng role/kho trong database.
-            if (_environment.IsDevelopment() && _configuration.GetValue<bool>("GoodsReceipts:UseDevelopmentUserHeader"))
-            {
-                string value = Request.Headers["X-Development-UserId"].ToString();
-                if (int.TryParse(value, out int userId) && userId > 0)
-                {
-                    return userId;
-                }
-            }
+            string? value = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            if (int.TryParse(value, out int userId) && userId > 0) return userId;
             throw new GoodsReceiptException(401, "GR_UNAUTHENTICATED", "Authentication is required.");
         }
 
-        // Một hàm xử lý lỗi dùng lại cho 8 action để Controller dễ đọc.
         private IActionResult HandleError(Exception ex)
         {
             if (ex is GoodsReceiptException error)

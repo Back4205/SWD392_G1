@@ -14,5 +14,14 @@ namespace EWMS.Api.DTOs.InboundRequests
         public string CommitmentStatus { get; set; } = string.Empty;
 
         public DateTime? ExpectedDeliveryDate { get; set; }
+
+        public List<SupplierManifestItemDto> Items { get; set; } = new();
+    }
+
+    public class SupplierManifestItemDto
+    {
+        public int ItemId { get; set; }
+        public string SKU { get; set; } = string.Empty;
+        public List<string> SerialCodes { get; set; } = new();
     }
 }

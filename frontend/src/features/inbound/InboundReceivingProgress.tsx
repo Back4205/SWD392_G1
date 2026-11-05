@@ -1,169 +1,36 @@
-import "./InboundReceivingProgress.css";
 import { useEffect, useState } from "react";
-import {
-    getInboundReceivingProgress,
-    type InboundReceivingProgress as ReceivingProgressData,
-} from "./inbound.api";
+import { getInboundReceivingProgress, type InboundReceivingProgress as Progress } from "./inbound.api";
+import { inboundError } from "./inbound.helpers";
 
-interface Props {
-    requestId: number;
-}
+interface Props { requestId: number; products: { id: number; sku: string; productName: string }[]; }
 
-export default function InboundReceivingProgress({
-    requestId,
-}: Props) {
-    const [progress, setProgress] =
-        useState<ReceivingProgressData | null>(null);
+export default function InboundReceivingProgress({ requestId, products }: Props) {
+  const [progress, setProgress] = useState<Progress | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [reload, setReload] = useState(0);
 
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        let active = true;
-
-        async function loadProgress() {
-            setLoading(true);
-            setError(null);
-            setProgress(null);
-
-            try {
-                const data = await getInboundReceivingProgress(requestId);
-
-                if (active) {
-                    setProgress(data);
-                }
-            } catch (err) {
-                if (active) {
-                    setError(
-                        err instanceof Error
-                            ? err.message
-                            : "Failed to load receiving progress."
-                    );
-                }
-            } finally {
-                if (active) {
-                    setLoading(false);
-                }
-            }
-        }
-
-        void loadProgress();
-
-        return () => {
-            active = false;
-        };
-    }, [requestId]);
-
-    return (
-        <section className= "inbound-progress" >
-        <div className="inbound-progress__header" >
-            <div>
-            <span className="inbound-progress__eyebrow" >
-            05 / RECEIVING PROGRESS
-        </span>
-        < h2 > Receiving Progress </h2>
-            < p > Track expected and received quantities.</p>
-                </div>
-                </div>
-
-    {
-        loading && (
-            <p className="inbound-progress__message" >
-                Loading receiving progress...
-        </p>
-      )
+  useEffect(() => {
+    let active = true;
+    async function loadProgress() {
+      setLoading(true); setError("");
+      try { const data = await getInboundReceivingProgress(requestId); if (active) setProgress(data); }
+      catch (err) { if (active) setError(inboundError(err)); }
+      finally { if (active) setLoading(false); }
     }
+    void loadProgress();
+    return () => { active = false; };
+  }, [requestId, reload]);
 
-    {
-        error && (
-            <p className="inbound-progress__error" role = "alert" >
-            { error }
-                </p>
-      )
-    }
-
-    {
-        !loading && !error && progress && (
-            <>
-            <div className="inbound-progress__stats" >
-                <div>
-                <span>Expected Quantity </span>
-                    < strong > { progress.totalExpectedQty } </strong>
-                    </div>
-
-                    < div >
-                    <span>Received Quantity </span>
-                        <strong>
-        { progress.totalReceivedQty ?? "N/A" }
-        </strong>
-            </div>
-
-            < div >
-            <span>Remaining Quantity </span>
-                <strong>
-        { progress.remainingQty ?? "N/A" }
-        </strong>
-            </div>
-
-            < div >
-            <span>Completion </span>
-            <strong>
-        {
-            progress.progressPercentage === null
-            ? "N/A"
-            : `${progress.progressPercentage.toFixed(1)}%`
-        }
-        </strong>
-            </div>
-            </div>
-
-        {
-            progress.progressStatus === "NotAvailable" && (
-                <div className="inbound-progress__notice" >
-                    Receiving data is not available yet.
-              Goods Receipt integration is pending.
-            </div>
-          )
-        }
-
-        <div className="inbound-progress__table-wrapper" >
-            <table className="inbound-progress__table" >
-                <thead>
-                <tr>
-                <th>Product Variant </th>
-                    < th > Expected </th>
-                    < th > Received </th>
-                    < th > Remaining </th>
-                    </tr>
-                    </thead>
-
-                    <tbody>
-        {
-            progress.items.map((item) => (
-                <tr key= { item.productVariantId } >
-                <td>Variant #{ item.productVariantId } </td>
-                < td > { item.expectedQty } </td>
-                < td > { item.receivedQty ?? "N/A" } </td>
-                < td > { item.remainingQty ?? "N/A" } </td>
-            </tr>
-            ))
-        }
-
-        {
-            progress.items.length === 0 && (
-                <tr>
-                <td colSpan={ 4 }>
-                    No inbound request items found.
-                    </td>
-                        </tr>
-                )
-        }
-        </tbody>
-            </table>
-            </div>
-            </>
-      )
-    }
-    </section>
-  );
+  const percent = Math.max(0, Math.min(100, progress?.progressPercentage || 0));
+  return <section className="gr-panel ib-section">
+    <div className="ib-section-heading"><div><h2>Tiến độ nhận hàng</h2><p className="ib-muted">Chỉ tính số lượng từ phiếu nhận đã được quản lý duyệt.</p></div><button className="gr-button gr-button--quiet" disabled={loading} onClick={() => setReload(value => value + 1)}>Làm mới tiến độ</button></div>
+    {loading && <p role="status">Đang tải tiến độ nhận hàng…</p>}
+    {error && <div className="gr-alert gr-alert--error" role="alert">{error} <button className="gr-text-button" onClick={() => setReload(value => value + 1)}>Thử lại</button></div>}
+    {!loading && !error && progress && <>
+      <div className="ib-progress-heading"><strong>{progress.totalReceivedQty ?? "—"} / {progress.totalExpectedQty} thiết bị</strong><span>{progress.progressPercentage === null ? "Chưa có số liệu" : `${percent.toFixed(1)}% hoàn thành`}</span></div>
+      <progress className="ib-progress" max={100} value={percent} aria-label="Tỷ lệ nhận hàng" />
+      <div className="gr-table-scroll"><table className="gr-table"><caption className="sr-only">Tiến độ nhận theo sản phẩm</caption><thead><tr><th>Sản phẩm / SKU</th><th>Dự kiến</th><th>Đã nhận</th><th>Còn thiếu</th></tr></thead><tbody>{progress.items.map(item => <tr key={item.productVariantId}><td className="gr-sku">{products.find(x => x.id === item.productVariantId)?.sku || `Sản phẩm #${item.productVariantId}`}</td><td>{item.expectedQty}</td><td>{item.receivedQty ?? "—"}</td><td><strong>{item.remainingQty ?? "—"}</strong></td></tr>)}</tbody></table></div>
+    </>}
+  </section>;
 }

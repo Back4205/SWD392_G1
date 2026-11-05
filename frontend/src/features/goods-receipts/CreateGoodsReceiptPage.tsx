@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import { createGoodsReceipt, getReceivableInbounds } from "./goodsReceipt.api";
 import type { ReceivableInbound } from "./goodsReceipt.types";
 import { receiptErrorMessage } from "./receipt.helpers";
-import { navigateTo } from "../../hooks/useHashRoute";
+import { navigateTo } from "../../hooks/useAppRoute";
 
-interface Props { busy: boolean; onBusyChange: (busy: boolean) => void; }
+interface Props { basePath: string; busy: boolean; onBusyChange: (busy: boolean) => void; }
 
-export default function CreateGoodsReceiptPage({ busy, onBusyChange }: Props) {
+export default function CreateGoodsReceiptPage({ busy, onBusyChange, basePath }: Props) {
   const [inbounds, setInbounds] = useState<ReceivableInbound[]>([]);
-  const [selectedId, setSelectedId] = useState(0);
+  const [selectedId, setSelectedId] = useState(() => Number(new URLSearchParams(window.location.search).get("inboundRequestId")) || 0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
@@ -39,7 +39,7 @@ export default function CreateGoodsReceiptPage({ busy, onBusyChange }: Props) {
     setError("");
     try {
       const receipt = await createGoodsReceipt(selected.id);
-      navigateTo(`/goods-receipts/${receipt.id}`);
+      navigateTo(`${basePath}/${receipt.id}`);
     } catch (err) {
       setError(receiptErrorMessage(err));
     } finally {
@@ -48,13 +48,13 @@ export default function CreateGoodsReceiptPage({ busy, onBusyChange }: Props) {
   }
 
   return <>
-    <button className="gr-back-link" disabled={busy} onClick={() => navigateTo("/goods-receipts")}>← Danh sách phiếu nhận</button>
+    <button className="gr-back-link" disabled={busy} onClick={() => navigateTo(basePath)}>← Danh sách phiếu nhận</button>
     <header className="gr-page-heading"><div><p className="gr-eyebrow">BẮT ĐẦU NHẬN HÀNG</p><h1>Tạo phiếu nhận</h1><p>Chọn yêu cầu nhập đã được duyệt và còn hàng chưa nhận.</p></div></header>
 
     {error && <div className="gr-alert gr-alert--error" role="alert">{error} <button className="gr-text-button" onClick={() => setReloadKey(value => value + 1)}>Tải lại danh sách</button></div>}
     <section className="gr-panel gr-create-panel">
       <div className="gr-section-label"><span>1</span><div><h2>Chọn yêu cầu nhập</h2><p>Chỉ hiển thị yêu cầu trong các kho bạn được phân công.</p></div></div>
-      {loading ? <p role="status">Đang tải yêu cầu có thể nhận…</p> : !error && inbounds.length === 0 ? <div className="gr-empty"><h2>Chưa có yêu cầu để nhận hàng</h2><p>Yêu cầu cần được duyệt và còn ít nhất một sản phẩm chưa nhận đủ.</p><button className="gr-button gr-button--secondary" onClick={() => navigateTo("/inbound")}>Xem yêu cầu nhập</button></div> : <>
+      {loading ? <p role="status">Đang tải yêu cầu có thể nhận…</p> : !error && inbounds.length === 0 ? <div className="gr-empty"><h2>Chưa có yêu cầu để nhận hàng</h2><p>Yêu cầu cần được duyệt và còn ít nhất một sản phẩm chưa nhận đủ.</p><button className="gr-button gr-button--secondary" onClick={() => navigateTo("/staff/inbound-requests")}>Xem yêu cầu nhập</button></div> : <>
         <label className="gr-inbound-select">Yêu cầu nhập<select value={selectedId || ""} disabled={busy} onChange={event => setSelectedId(Number(event.target.value))}>
           <option value="" disabled>Chọn một yêu cầu nhập…</option>
           {inbounds.map(inbound => <option key={inbound.id} value={inbound.id}>Inbound #{inbound.id} · {inbound.warehouseName} · {inbound.status === "PartiallyReceived" ? "Đã nhận một phần" : "Đã duyệt"}</option>)}

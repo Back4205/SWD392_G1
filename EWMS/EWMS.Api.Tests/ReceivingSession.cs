@@ -1,4 +1,4 @@
-﻿using EWMS.Api.Data;
+using EWMS.Api.Data;
 using EWMS.Api.DTOs.GoodsReceipts;
 using EWMS.Api.Entities;
 using EWMS.Api.Interfaces;
@@ -19,7 +19,7 @@ internal sealed class ReceivingSession : IDisposable
         IConfiguration? configuration = null)
     {
         Context = fixture.CreateContext();
-        IStockService stock = new MockStockService(Context);
+        IStockService stock = new StockReceivingService(Context);
         IInboundService inbound = new InboundReceivingService(Context);
         if (failure == FailurePoint.AfterSerial || failure == FailurePoint.AfterStock)
             stock = new FailingStockService(stock, failure);

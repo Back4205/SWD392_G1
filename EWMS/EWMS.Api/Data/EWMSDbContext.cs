@@ -37,6 +37,7 @@ namespace EWMS.Api.Data
         // 4. Inbound Request
         public DbSet<InboundRequest> InboundRequests => Set<InboundRequest>();
         public DbSet<InboundRequestItem> InboundRequestItems => Set<InboundRequestItem>();
+        public DbSet<InboundExpectedSerial> InboundExpectedSerials => Set<InboundExpectedSerial>();
 
         // 5. Goods Receipt & Serial
         public DbSet<GoodsReceipt> GoodsReceipts => Set<GoodsReceipt>();
@@ -442,6 +443,7 @@ namespace EWMS.Api.Data
             {
                 e.ToTable("InboundRequestItem");
                 e.HasKey(x => x.Id);
+                e.HasAlternateKey(x => new { x.Id, x.InboundRequestId });
 
                 e.HasOne(x => x.InboundRequest).WithMany()
                     .HasForeignKey(x => x.InboundRequestId)
@@ -449,6 +451,19 @@ namespace EWMS.Api.Data
 
                 e.HasOne(x => x.ProductVariant).WithMany()
                     .HasForeignKey(x => x.ProductVariantId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            modelBuilder.Entity<InboundExpectedSerial>(e =>
+            {
+                e.ToTable("InboundExpectedSerial");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.SerialCode).HasColumnType("varchar(100)").IsRequired();
+                e.HasIndex(x => new { x.InboundRequestId, x.SerialCode }).IsUnique();
+                // FK kép không cho gắn dòng của Inbound A vào bảng kê Inbound B.
+                e.HasOne(x => x.InboundRequestItem).WithMany()
+                    .HasForeignKey(x => new { x.InboundRequestItemId, x.InboundRequestId })
+                    .HasPrincipalKey(x => new { x.Id, x.InboundRequestId })
                     .OnDelete(DeleteBehavior.NoAction);
             });
 

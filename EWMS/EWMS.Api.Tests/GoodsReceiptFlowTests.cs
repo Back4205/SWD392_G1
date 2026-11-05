@@ -1,4 +1,4 @@
-﻿using EWMS.Api.Common;
+using EWMS.Api.Common;
 using EWMS.Api.DTOs.GoodsReceipts;
 using EWMS.Api.Entities;
 using EWMS.Api.Services;
@@ -593,7 +593,7 @@ public class GoodsReceiptFlowTests
         Assert.Equal(quantity, await context.SerialNumbers.CountAsync(x => x.ProductVariantId == data.VariantId && x.CurrentBinId == data.BinId));
         Assert.Equal(inboundStatus, (await context.InboundRequests.FindAsync(data.InboundId))!.Status);
         // Kiểm tra contract tiến độ của module Inbound bạn cùng nhóm đã làm.
-        var inboundService = new InboundRequestService(new InboundRequestRepository(context));
+        var inboundService = new InboundRequestService(new InboundRequestRepository(context), context, new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build());
         var progress = await inboundService.GetReceivingProgressAsync(data.InboundId);
         Assert.NotNull(progress);
         Assert.Equal(quantity, progress.TotalReceivedQty);

@@ -98,9 +98,7 @@ Migration chưa được áp vào database ứng dụng của người dùng. B�
 đã áp migrations trên database SQL Server test riêng `EWMS_GoodsReceiptTests_<guid>`.
 Không cần tạo lại migration/entity hoặc xóa database để chạy module.
 
-API hiện chỉ có `MockStockService` thay tạm Người 2 nên Program chủ động chặn
-khởi động ngoài Development. Khi chạy lệnh EF cho dataset demo, đặt môi trường và
-database riêng trước, giữ seed tắt khi tạo schema:
+Bản hiện tại dùng `StockReceivingService` ghi SQL trong transaction nhận hàng và Auth JWT thật. Khi chạy lệnh EF cho database local, đặt môi trường và database riêng trước, giữ seed tắt khi tạo schema:
 
 ```powershell
 $env:ASPNETCORE_ENVIRONMENT = 'Development'
@@ -117,3 +115,17 @@ gán BinId giả bằng 0. Rollback sẽ xóa staging/version và thu reason v�
 cần xuất dữ liệu scan/lý do Unicode muốn giữ trước khi quyết định rollback.
 
 Hướng dẫn chạy demo, payload và tích hợp: [Goods Receipt Backend](goods-receipt-backend.md).
+
+## Bổ sung phiên đăng nhập — 05/11/2026
+
+Migration `20261105160638_AddAuthenticationSessions` thêm bảng `AuthSession` gồm ID phiên, UserId, thời điểm tạo/hết hạn/thu hồi và index `(UserId, ExpiresAt)`. Bảng này cho phép logout/đổi mật khẩu thu hồi JWT đang lưu ở cookie; không sửa các migration Receipt trước đó.
+
+Đã áp migration mới vào `EWMS_GoodsReceipt_Development` để kiểm thử web và database test riêng. Chưa áp vào database làm việc của nhóm. Backend hiện qua 61/61 test SQL/HTTP với đăng nhập thật. Hướng dẫn khởi tạo tài khoản local, signing key và cấu hình HTTPS: [Web EWMS theo vai trò](role-based-web.md).
+
+## Bổ sung bảng kê nhà cung cấp — bắt đầu 05/11/2026
+
+Migration `20261105165917_AddInboundSupplierManifest` bổ sung `InboundRequest.HasSupplierManifest` (mặc định false), bảng `InboundExpectedSerial`, alternate key `(Id, InboundRequestId)` của item và composite FK `(InboundRequestItemId, InboundRequestId)`. Unique `(InboundRequestId, SerialCode)` chặn mã trùng trong cùng bảng kê. Không sửa nội dung migration trước đó; không ghi dữ liệu vào SerialNumber/Stock.
+
+Cờ mặc định false giữ các yêu cầu đã duyệt trước migration như dữ liệu lịch sử chưa có bảng kê. Không lấy serial thực nhận để tự backfill thành serial dự kiến. Yêu cầu mới chỉ được duyệt sau khi Purchasing đã Confirmed và nhập đủ danh sách. `Down` xóa bảng kê/cờ nên làm mất dữ liệu khai báo; không dùng rollback để sửa dữ liệu nghiệp vụ.
+
+`start-dev.cmd` tự build và áp migration vào database Development riêng, giữ mật khẩu và Receipt đã có; không cần `-ResetPasswords` để nâng cấp schema. Không áp migration vào database nhóm khi chưa chủ động chọn môi trường đó. Test hiện tại dùng database GUID riêng và đã qua **80/80 SQL/HTTP tests**; log `EWMS/EWMS.Api.Tests/obj/manifest-full-result.log`. Chi tiết: [Bảng kê và đối chiếu](supplier-serial-reconciliation.md).

@@ -1,178 +1,97 @@
-# React Goods Receipt — hướng dẫn đọc, chạy và demo
+# React Goods Receipt — hướng dẫn đọc và sử dụng
 
-Giao diện Người 5 gồm danh sách phiếu, tạo phiếu từ Inbound còn thiếu, quét Serial/IMEI, chọn bin, lưu nháp, gửi duyệt và Manager duyệt/từ chối. React gọi Backend thật; số lượng, trạng thái và quyền thao tác đều lấy từ server.
+Giao diện Người 5 gọi Backend thật để tạo Draft, scan Serial/IMEI, chọn bin, lưu nháp, gửi duyệt và Manager approve/reject. Bản hiện tại đã chuyển sang đăng nhập và URL theo vai trò. Hướng dẫn chạy trước đây bằng bộ chọn actor đã được thay thế bởi [Web EWMS theo vai trò](role-based-web.md).
 
-Code giữ cách viết dễ đọc của module Inbound: component thường, `useState`, `useEffect`, `fetch`, interface TypeScript và CSS thường. Không cài thêm router, thư viện giao diện hay thư viện quản lý state.
+## Chạy ứng dụng
 
-## 1. Chạy bằng hai terminal
+Từ repository root, chạy `.\start-dev.cmd`, chọn mật khẩu khởi tạo 12–128 ký tự khi chạy lần đầu rồi mở `http://127.0.0.1:5173/login`. Đăng nhập tài khoản local `staff`, `manager` hoặc `purchasing` bằng mật khẩu người chạy đã chọn. Nhấn Enter ở lần chạy sau để giữ mật khẩu cũ; dùng `-ResetPasswords` nếu cần đặt lại. Dừng bằng `.\stop-dev.cmd`.
 
-Cần .NET 8 SDK, SQL Server, `dotnet-ef` 8.x và Node.js/npm phù hợp với `frontend/package-lock.json`. Các lệnh dưới dùng PowerShell trên Windows. Dùng `npm.cmd` nếu máy chặn chạy `npm.ps1`; không cần thay đổi Execution Policy.
+Script dùng database local riêng `EWMS_GoodsReceipt_Development`; giữ dữ liệu nghiệp vụ khi chạy lại. Chi tiết yêu cầu máy, cấu hình, đăng nhập, CSRF và production nằm trong [hướng dẫn web](role-based-web.md). Khi chỉ chạy React riêng, xem [frontend README](../frontend/README.md).
 
-### Terminal 1: Backend
+## Đọc source theo thứ tự
 
-Chạy từ thư mục gốc repository. Dùng database demo riêng để không ảnh hưởng database làm việc của nhóm:
-
-```powershell
-$env:ASPNETCORE_ENVIRONMENT = 'Development'
-$env:ConnectionStrings__EWMSDatabase = 'Server=.;Database=EWMS_GoodsReceipt_Development;Integrated Security=true;TrustServerCertificate=true;Encrypt=false'
-$env:GoodsReceipts__UseDevelopmentUserHeader = 'true'
-$env:GoodsReceipts__SeedDevelopmentData = 'false'
-
-dotnet restore EWMS/EWMS.sln
-dotnet build EWMS/EWMS.sln --no-restore
-dotnet ef database update --project EWMS/EWMS.Api/EWMS.Api.csproj
-
-$env:GoodsReceipts__SeedDevelopmentData = 'true'
-dotnet run --project EWMS/EWMS.Api/EWMS.Api.csproj --no-launch-profile --urls http://localhost:5085
-```
-
-Seeder chỉ chấp nhận môi trường Development và đúng database `EWMS_GoodsReceipt_Development`. Nó log ID của Staff, Manager, Inbound và bin. Chạy lại seed không xóa hoặc reset dữ liệu đã demo.
-
-### Terminal 2: React
-
-Mở terminal khác tại thư mục gốc repository:
-
-```powershell
-cd frontend
-npm.cmd ci
-
-if (-not (Test-Path .env.local)) {
-    Copy-Item .env.example .env.local
-}
-
-npm.cmd run dev -- --host 127.0.0.1 --port 5173
-```
-
-Mở `http://127.0.0.1:5173/`. Vite chuyển các request `/api` sang Backend qua proxy, nên không cần tự ghép URL Backend trong mỗi component.
-
-`frontend/.env.example` hiện gồm:
-
-```dotenv
-VITE_API_PROXY_TARGET=http://localhost:5085
-VITE_RECEIVING_DEMO_ENABLED=true
-VITE_RECEIVING_STAFF_ID=2
-VITE_RECEIVING_MANAGER_ID=1
-```
-
-`.env.local` được Git bỏ qua. Nếu sửa file này, dừng và chạy lại Vite. ID `2/1` đúng với database demo mới đã được tạo trên máy hiện tại; ở database khác, sửa theo log của seeder.
-
-## 2. Đọc code từ đâu?
-
-| File | Vai trò | Điều cần hiểu |
-|---|---|---|
-| [App.tsx](../frontend/src/App.tsx) | Khung ứng dụng, hai mục điều hướng | Mở Inbound hoặc Goods Receipt; khóa đổi trang khi đang gửi thao tác |
-| [useHashRoute.ts](../frontend/src/hooks/useHashRoute.ts) | Theo dõi URL sau dấu `#` | Refresh/back vẫn giữ màn hình và bộ lọc, chưa cần cài router |
-| [goodsReceipt.types.ts](../frontend/src/features/goods-receipts/goodsReceipt.types.ts) | Kiểu dữ liệu request/response | Property khớp DTO C#; interface không tạo dữ liệu giả |
-| [goodsReceipt.api.ts](../frontend/src/features/goods-receipts/goodsReceipt.api.ts) | Gọi API bằng `fetch` | Mỗi hàm có URL và payload rõ ràng; xử lý lỗi chung ở một nơi |
-| [GoodsReceiptWorkspace.tsx](../frontend/src/features/goods-receipts/GoodsReceiptWorkspace.tsx) | Tải session và chọn màn hình | Lấy role/kho từ Backend; bộ chọn actor chỉ dành cho demo |
-| [GoodsReceiptListPage.tsx](../frontend/src/features/goods-receipts/GoodsReceiptListPage.tsx) | Danh sách, lọc, phân trang | `useEffect` tải dữ liệu; filter/page lưu trên URL |
-| [CreateGoodsReceiptPage.tsx](../frontend/src/features/goods-receipts/CreateGoodsReceiptPage.tsx) | Chọn Inbound và tạo Draft | Chỉ thấy yêu cầu trong kho được gán và còn hàng chưa nhận |
-| [GoodsReceiptDetailPage.tsx](../frontend/src/features/goods-receipts/GoodsReceiptDetailPage.tsx) | Scan, bin, lưu, gửi duyệt, xem quyết định | Handler gọi API, đợi thành công rồi cập nhật state |
-| [ReceiptDecisionDialog.tsx](../frontend/src/features/goods-receipts/ReceiptDecisionDialog.tsx) | Xác nhận approve/reject | Dùng native `<dialog>`; reject kiểm tra lý do đã trim |
-| [receipt.helpers.ts](../frontend/src/features/goods-receipts/receipt.helpers.ts) | Nhãn tiếng Việt, lỗi, ngày giờ | Phân biệt lỗi trùng serial với stale version |
-| [goodsReceipt.css](../frontend/src/features/goods-receipts/goodsReceipt.css) | Giao diện module | Tiền tố `gr-` hạn chế đè CSS Inbound |
-
-Các màn hình Inbound cũ được giữ trong `features/inbound`. Phần điều hướng Inbound trước đây ở `App.tsx` được chuyển sang [InboundPages.tsx](../frontend/src/features/inbound/InboundPages.tsx), chỉ đổi đường dẫn import và tên component.
-
-### Các khái niệm React dùng trong module
-
-- `useState`: nhớ dữ liệu đang hiển thị, ví dụ phiếu, ô serial, bin đang chọn hoặc thông báo lỗi.
-- `useEffect`: tải dữ liệu khi mở trang, đổi phiếu hoặc đổi tài khoản. Không đặt thao tác approve/submit trong effect.
-- Event handler như `handleScan`, `handleSave`: chạy khi người dùng bấm nút hoặc Enter.
-- `useRef`: giữ input để đưa focus về ô scan, hoặc đánh dấu request đang chạy để chặn Enter liên tiếp.
-- Props: component cha truyền session, trạng thái đang gửi và callback xuống component con.
-
-Ví dụ luồng scan: submit form → `handleScan` → `addReceiptSerial` → Backend kiểm tra/lưu → tải lại phiếu → `setReceipt`. UI không tự cộng `ReceivedQty`.
-
-## 3. URL và API
-
-| Màn hình | URL local |
+| File | Trách nhiệm |
 |---|---|
-| Danh sách phiếu | `/#/goods-receipts` |
-| Danh sách chờ duyệt | `/#/goods-receipts?status=PendingApproval` |
-| Tạo phiếu | `/#/goods-receipts/new` |
-| Chi tiết phiếu | `/#/goods-receipts/123` — thay 123 bằng ID thực |
-| Module Inbound đã có | `/#/inbound` |
+| [App.tsx](../frontend/src/App.tsx) | Lấy user từ API, chuyển trang đăng nhập, menu theo role, 403/404, đăng xuất |
+| [useAppRoute.ts](../frontend/src/hooks/useAppRoute.ts) | History API cho URL thật và back/forward |
+| [http.ts](../frontend/src/api/http.ts) | Cookie, token CSRF, fetch chung và lỗi 401 |
+| [features/auth](../frontend/src/features/auth) | Đăng nhập, thông tin tài khoản và đổi mật khẩu |
+| [goodsReceipt.types.ts](../frontend/src/features/goods-receipts/goodsReceipt.types.ts) | Interface khớp DTO C# |
+| [goodsReceipt.api.ts](../frontend/src/features/goods-receipts/goodsReceipt.api.ts) | URL/payload cụ thể của từng API Receipt |
+| [GoodsReceiptWorkspace.tsx](../frontend/src/features/goods-receipts/GoodsReceiptWorkspace.tsx) | Chọn list/create/detail theo URL và session từ App |
+| [GoodsReceiptListPage.tsx](../frontend/src/features/goods-receipts/GoodsReceiptListPage.tsx) | Filter, phân trang và hàng dữ liệu API |
+| [CreateGoodsReceiptPage.tsx](../frontend/src/features/goods-receipts/CreateGoodsReceiptPage.tsx) | Chọn Inbound được phép nhận rồi tạo Draft |
+| [GoodsReceiptDetailPage.tsx](../frontend/src/features/goods-receipts/GoodsReceiptDetailPage.tsx) | Handler scan/bin/save/submit, xem serial và quyết định |
+| [ReceiptSerialComparison.tsx](../frontend/src/features/goods-receipts/ReceiptSerialComparison.tsx) | Đối chiếu serial nhà cung cấp với mã quét, có trạng thái theo các đợt nhận |
+| [ReceiptDecisionDialog.tsx](../frontend/src/features/goods-receipts/ReceiptDecisionDialog.tsx) | Native dialog xác nhận approve/reject |
+| [receipt.helpers.ts](../frontend/src/features/goods-receipts/receipt.helpers.ts) | Nhãn, thông báo lỗi và ngày giờ tiếng Việt |
 
-Tám API nghiệp vụ vẫn theo [bàn giao Backend](goods-receipt-backend.md). Giao diện dùng thêm ba API chỉ đọc:
+Code dùng component thường, `useState`, `useEffect`, `useRef`, `fetch` và CSS. `useState` nhớ dữ liệu màn hình; `useEffect` tải dữ liệu khi mở/đổi trang; handler thực hiện thao tác khi người dùng bấm nút; `useRef` giữ focus ô scan và chặn request gửi trùng. Không đưa approve/submit vào effect.
 
-| API | Dữ liệu phục vụ UI |
+Ví dụ scan: submit form → `handleScan` → `addReceiptSerial` → API kiểm tra và lưu → tải lại DTO → `setReceipt`. UI không tự tăng `ReceivedQty` trước khi server xác nhận.
+
+## Các trang Receipt
+
+| Vai trò | Trang |
 |---|---|
-| `GET /api/goods-receipts/session` | ID, tên, role và các kho được phân công |
-| `GET /api/goods-receipts/lookups/inbounds` | Inbound Approved/PartiallyReceived còn thiếu trong kho của Staff |
-| `GET /api/goods-receipts/lookups/bins?warehouseId=...` | Bin đúng kho, tên rack và tải trọng còn trống |
+| Staff | `/staff/receipts`, `/staff/receipts/new`, `/staff/receipts/{id}` |
+| Manager | `/manager/approvals`, `/manager/receipts`, `/manager/receipts/{id}` |
 
-Backend kiểm tra user/role/kho cho cả ba query. Ẩn nút ở React chỉ hỗ trợ thao tác; nó không thay thế kiểm tra quyền ở server.
+Staff tạo phiếu và sửa nháp do mình tạo, thuộc kho được gán. Manager xem hàng chờ duyệt và lịch sử, kiểm tra serial/bin rồi quyết định. Purchasing xem tiến độ qua Inbound, không có quyền duyệt Receipt. Gõ URL của role khác sẽ bị chặn; API kiểm tra quyền riêng trên từng request.
 
-## 4. Kịch bản demo khi bảo vệ
+Ba query Receipt phục vụ form:
 
-Database demo có thể đã có phiếu từ các lần kiểm thử. Không giả định danh sách trống hoặc tồn kho đang bằng 0. Chọn một Inbound còn thiếu trên màn hình tạo phiếu; nếu cần kịch bản đúng 10 máy, dùng yêu cầu mới có ExpectedQty = 10 qua module Inbound/API của nhóm. Không reset database để bắt đầu lại.
+| API | Dữ liệu |
+|---|---|
+| `GET /api/goods-receipts/session` | Session tương thích của module; App hiện dùng `/api/auth/me` |
+| `GET /api/goods-receipts/lookups/inbounds` | Inbound Approved/PartiallyReceived còn thiếu trong kho Staff |
+| `GET /api/goods-receipts/lookups/bins?warehouseId=...` | Bin đúng kho và tải trọng còn trống |
 
-### Nhận 8 rồi nhận tiếp 2
+Inbound dùng thêm `/api/inbound-requests/lookups` cho các select kho/sản phẩm/nhà cung cấp. Tám API nghiệp vụ Receipt và DTO Version giữ như [hướng dẫn Backend](goods-receipt-backend.md).
 
-1. Chọn **Nhân viên nhận hàng** ở bộ chọn thực hành.
-2. Chọn **Tạo phiếu nhận**, chọn Inbound dự kiến 10 máy và còn thiếu 10. Bấm **Tạo phiếu nháp**.
-3. Quét 8 mã khác nhau, ví dụ thêm tiền tố ngày/lần chạy để không trùng dữ liệu cũ. Backend trả số lượng 8; chưa cộng tồn.
-4. Chọn bin cho dòng có hàng, bấm **Lưu nháp**. Tải lại trang để chứng minh scan/bin đã được lưu.
-5. Bấm **Gửi Manager duyệt**. UI lưu bin thành công trước rồi submit bằng Version mới. Phiếu chuyển **Chờ duyệt**, không còn form chỉnh sửa.
-6. Đổi sang **Manager duyệt phiếu**, mở/xem phiếu và bấm **Duyệt nhập kho → Xác nhận duyệt**.
-7. Đối chiếu tiến độ Inbound: đã nhận 8, còn thiếu 2, trạng thái PartiallyReceived.
-8. Đổi về Staff, tạo phiếu mới từ cùng Inbound, quét 2 mã mới, chọn bin và gửi duyệt.
-9. Manager duyệt phiếu thứ hai. Tiến độ nhận đủ 10, còn thiếu 0, Inbound Completed; Inbound này không còn trong lookup tạo phiếu.
+## Thử trọn luồng với các tài khoản
 
-Chọn đúng SKU `GR-DEMO-SKU` và bin theo dataset. Trong database demo hiện tại, Staff ID 2, Manager ID 1, Bin A ID 1; UI dùng tên/combobox nên người dùng không cần nhập các ID này vào form phiếu.
+1. Đăng nhập `manager`, mở **Quản lý yêu cầu nhập**, tạo yêu cầu với kho và số lượng dự kiến 10.
+2. Đăng xuất, đăng nhập `purchasing`, mở yêu cầu vừa tạo, chọn nhà cung cấp, xác nhận/ngày giao và khai báo đủ 10 serial cho từng SKU theo số lượng kế hoạch. Mỗi serial một dòng; SKU/số lượng hiển thị chỉ đọc.
+3. Đăng nhập `manager`, xem và duyệt yêu cầu nhập.
+4. Đăng nhập `staff`, tạo phiếu từ yêu cầu đó, quét 8 serial có trong bảng kê và đúng SKU, rồi chọn bin. Mã sai bị chặn, không tăng số lượng. Bảng đối chiếu hiển thị dự kiến cạnh mã thực tế.
+5. **Lưu nháp**, tải lại trang để kiểm tra scan/bin vẫn còn. **Gửi Manager duyệt** sẽ lưu bin trước rồi submit bằng Version mới.
+6. Đăng nhập `manager`, mở phiếu tại **Phiếu chờ phê duyệt**, chọn **Duyệt nhập kho → Xác nhận duyệt**. Inbound đã nhận 8, còn 2, trạng thái PartiallyReceived.
+7. Staff tạo phiếu thứ hai từ cùng Inbound, nhận 2 mã còn lại trong bảng kê và gửi duyệt. Manager duyệt lần hai; Inbound Completed, còn 0 và không còn trong lookup nhận hàng.
+8. Purchasing xem lại tiến độ đã nhận đủ từ trang chi tiết Inbound.
 
-### Nhánh từ chối và lỗi
+Mật khẩu có thể khác nhau sau khi từng tài khoản đổi trong hồ sơ. Mỗi lần đổi role để thử là đăng xuất/đăng nhập thật, không đổi ID trong trình duyệt. Không giả định dataset đang rỗng; khai báo mã serial mới chưa được sử dụng cho từng yêu cầu mới.
 
-1. Dùng Inbound khác còn thiếu, lập và gửi một phiếu hợp lệ.
-2. Manager chọn **Từ chối phiếu**. Lý do rỗng hoặc chỉ khoảng trắng không được xác nhận.
-3. Nhập lý do như “Hàng vỡ, thiếu phụ kiện”, xác nhận và tải lại trang. Lý do vẫn còn, phiếu Rejected, tiến độ nhận không tăng.
-4. Thử serial chứa khoảng trắng hoặc quét lại mã đã có. UI báo lỗi và số lượng không tăng.
-5. Để minh họa stale version, mở cùng phiếu nháp ở hai tab. Tab thứ nhất scan/lưu; tab thứ hai thao tác với dữ liệu cũ sẽ báo phiếu đã thay đổi và tải lại dữ liệu mới.
+Để thử nhánh từ chối, gửi một phiếu khác rồi Manager chọn **Từ chối phiếu**, nhập lý do tiếng Việt và xác nhận. Lý do rỗng/khoảng trắng bị chặn; Rejected không cộng tồn hay tiến độ. Không có thao tác xóa scan, mở lại hoặc gửi lại phiếu Rejected vì nguồn nghiệp vụ chưa có các nhánh đó.
 
-Không có thao tác xóa serial, mở lại phiếu Rejected hoặc cho Staff tăng Stock trực tiếp vì nguồn chưa có các nhánh đó.
+## Hành vi cần giải thích khi review
 
-## 5. Những hành vi quan trọng để giải thích
+- **Bin đang chọn:** giữ trong state riêng. Scan thành công không làm mất bin chưa lưu; bước xếp bin chỉ hoàn tất khi đã lưu đủ vị trí cho các dòng có hàng.
+- **Version:** mỗi write thành công trả Version mới. Nếu stale/concurrent, tải lại detail và kiểm tra dữ liệu, không tự gửi lại approve/reject.
+- **Submit:** lưu Draft thành công trước, sau đó submit với Version vừa nhận. Lỗi lưu bin thì dừng, không gửi duyệt.
+- **Pending/Approved/Rejected:** không cho sửa. Chỉ Manager approve mới tạo serial chính thức, movement và tồn kho.
+- **Ngày giờ:** URL giữ ngày người dùng chọn; API client chuyển đầu/cuối ngày địa phương sang UTC để lọc. Hiển thị locale tiếng Việt.
+- **Hết phiên:** chuyển về đăng nhập. **Mất mạng:** báo lỗi và cho thử lại. Thành công chỉ hiển thị khi API thực sự thành công.
+- **Lịch sử:** nếu lookup bin lỗi, chi tiết vẫn hiển thị mã bin đã lưu và có nút tải lại tên/vị trí.
 
-**Bin chưa lưu và scan:** lựa chọn bin nằm trong state riêng. Một lần scan thành công không tự xóa các lựa chọn bin này. Bước “Quét & xếp bin” chỉ được đánh dấu xong khi các dòng đã nhận có bin đã lưu.
-
-**Version:** mỗi response write trả Version mới. Request tiếp theo dùng Version đó. Với `GR_STALE_VERSION` hoặc `GR_CONCURRENT_WRITE`, UI tải lại detail, báo người dùng xem lại và không tự gửi lại quyết định approve/reject.
-
-**Submit:** `handleSubmit` gọi lưu draft trước, chờ response, rồi dùng Version vừa nhận để gửi duyệt. Nếu lưu bin lỗi thì dừng, không submit dữ liệu chưa lưu.
-
-**Ngày giờ:** dữ liệu nhận lưu UTC. Bộ lọc giữ ngày người dùng chọn trên hash URL; API client đổi đầu/cuối ngày địa phương sang UTC trước khi gọi server. Ngày hiển thị dùng locale tiếng Việt.
-
-**Màn hình lịch sử:** Approved/Rejected chỉ đọc. Nếu lookup bin tạm lỗi hoặc kho đã ngừng hoạt động, phiếu vẫn hiện được và dùng Bin ID đã lưu thay cho tên bin.
-
-**Lỗi:** lỗi nghiệp vụ có `{ code, message }`, được đổi sang thông báo tiếng Việt. Lỗi DataAnnotations/bind là HTTP 400. Khi mất kết nối hoặc API chưa chạy, UI có thông báo và nút thử lại; chỉ báo thành công sau khi API thực sự trả thành công.
-
-## 6. Chế độ demo và phần còn chờ tích hợp
-
-Bộ chọn Staff/Manager chỉ xuất hiện khi `import.meta.env.DEV` và `VITE_RECEIVING_DEMO_ENABLED=true`. Client gửi ID qua `X-Development-UserId`; Backend chỉ chấp nhận header này trong Development và khi bật cấu hình riêng. Role/kho vẫn được lấy và kiểm tra trong database.
-
-Bản build production tắt nhánh demo bằng điều kiện `DEV`. Nó cần Auth thật của Người 3 và Backend cần StockService thật của Người 2. `MockStockService` hiện ghi SQL development thật bằng DbContext chung để test transaction, nhưng chưa phải kết luận đã tích hợp module Stock của thành viên khác.
-
-`VITE_API_PROXY_TARGET` dùng cho Vite dev server. Khi triển khai thật cần cấu hình ứng dụng/API và Auth phù hợp; lần làm này chỉ chuẩn bị code local, chưa deploy.
-
-## 7. Kiểm chứng
+## Kiểm chứng hiện tại và lịch sử
 
 ```powershell
-cd frontend
+# Tại frontend:
 npm.cmd run build
 
-# Chạy từ repository root trong terminal khác nếu cần kiểm tra Backend:
+# Tại repository root:
 dotnet test EWMS/EWMS.sln --no-restore
 ```
 
-- Build TypeScript + Vite đã thành công.
-- Backend sau khi thêm lookup/session: **54/54 test qua** trên SQL Server và HTTP thật, không skip.
-- Browser với API thật đã xác nhận: tạo phiếu, scan, invalid/duplicate không tăng count, giữ bin chưa lưu sau scan, stale reload, lưu/reload, submit khóa chỉnh sửa, Manager duyệt 8 rồi 2 và reject có lý do tiếng Việt.
-- Đã xác nhận Manager không tạo phiếu, skip link không đổi route và bộ lọc ngày Bangkok đổi đúng sang UTC.
-- Hoàn tất **44 kiểm tra trình duyệt** với API thật, gồm phím Enter/submit nhanh, offline → thử lại, fallback khi lookup bin lỗi và điều hướng Inbound cũ. Console cuối không có lỗi JavaScript.
-- Desktop 1440px và mobile 375px đã được xem trực tiếp. Đã sửa lỗi nhãn hỗ trợ screen reader làm bảng tràn ngang; sau sửa, `documentElement.scrollWidth = clientWidth = 375`.
-- SQL kiểm tra độc lập xác nhận luồng UI nhận đủ 10 máy: OnHandQty 10, ReservedQty 0 và đúng 10 movements; phiếu bị từ chối tạo 0 serial chính thức.
-- Bản build production không chứa header `X-Development-UserId`. API/Vite/Chrome kiểm thử được dừng sau khi xác minh; dữ liệu demo được giữ để thực hành tiếp.
+React build đã qua. Backend hiện có **61/61 test SQL/HTTP qua** với đăng nhập thật, CSRF, quyền kho/role và các kiểm thử Receipt trước đó. Browser giai đoạn hiện tại đã chạy luồng ba tài khoản từ tạo Inbound tới nhận một phần và nhận đủ; báo cáo cuối đặt tại `plans/20261105-role-based-web/reports/`.
 
-Báo cáo đầy đủ: [browser QA ngày 05/11/2026](../plans/20261104-goods-receipt/reports/browser-qa-20261105.md). Database demo có thêm Inbound 6/7/8 và phiếu 1–4; phiếu 4 còn Nháp, có 2 scan và bin đã lưu.
+[Báo cáo browser cũ](../plans/20261104-goods-receipt/reports/browser-qa-20261105.md) ghi 44 kiểm tra của giai đoạn giao diện trước. Báo cáo này là lịch sử, không còn là hướng dẫn đăng nhập hoặc nguồn cấu hình hiện tại.
 
-Không dùng response giả để tuyên bố tăng tồn thành công. Chi tiết transaction, migration và test SQL nằm trong [hướng dẫn Backend](goods-receipt-backend.md).
+Chưa deploy. Phần cộng tồn nhận hàng dùng SQL thật trong `StockReceivingService` và transaction chung; không tuyên bố đã hoàn thiện các phân hệ Stock/Auth Admin khác của nhóm.
+
+## Bảng kê và kiểm chứng hiện tại
+
+[Bảng kê nhà cung cấp và đối chiếu](supplier-serial-reconciliation.md) giải thích các trạng thái chờ nhận/quét phiếu này/đang ở phiếu khác/đã nhận chính thức, nhánh từ chối và dữ liệu lịch sử chưa có bảng kê. `SupplierCommitmentForm` xử lý serial theo từng SKU; `SupplierManifestPanel` hiển thị dữ liệu đã lưu; `ReceiptSerialComparison` đặt mã dự kiến cạnh `ScannedSerialCode`, không tự tạo scan từ danh sách nhà cung cấp.
+
+API hiện qua 80/80 test SQL/HTTP (61 cũ + 19 mới), React lint/build qua với 44 modules. Browser của tính năng này được ghi riêng trong [kế hoạch bảng kê](../plans/20261105-supplier-serial-reconciliation/plan.md), không dùng báo cáo demo cũ thay thế.

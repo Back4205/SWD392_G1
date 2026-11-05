@@ -1,4 +1,5 @@
-﻿using EWMS.Api.Data;
+using Microsoft.AspNetCore.Identity;
+using EWMS.Api.Data;
 using EWMS.Api.Entities;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ namespace EWMS.Api.Tests;
 // Mỗi lần chạy dùng database mới có GUID; không đọc cấu hình database ứng dụng.
 public class SqlServerFixture : IAsyncLifetime
 {
+    public const string TestPassword = "Test-Only-Password-42!";
     private const string Prefix = "EWMS_GoodsReceiptTests_";
     private readonly string _databaseName = Prefix + Guid.NewGuid().ToString("N");
     public string ConnectionString { get; private set; } = string.Empty;
@@ -67,12 +69,14 @@ public class SqlServerFixture : IAsyncLifetime
         var purchasingRole = await RoleAsync("Purchasing Manager");
         User NewUser(string label, Role role, string status = "Active")
         {
-            return new User
+            var user = new User
             {
                 UserName = label + suffix, FullName = label,
                 Email = label + suffix + "@example.test", PasswordHash = "TEST-NOT-A-LOGIN-HASH",
                 RoleId = role.Id, Status = status
             };
+            user.PasswordHash = new PasswordHasher<User>().HashPassword(user, TestPassword);
+            return user;
         }
         var staff = NewUser("staff", staffRole);
         var manager = NewUser("manager", managerRole);

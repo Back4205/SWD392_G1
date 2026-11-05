@@ -60,6 +60,31 @@ namespace EWMS.Api.Migrations
                     b.ToTable("AuditLog", (string)null);
                 });
 
+            modelBuilder.Entity("EWMS.Api.Entities.AuthSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "ExpiresAt");
+
+                    b.ToTable("AuthSession", (string)null);
+                });
+
             modelBuilder.Entity("EWMS.Api.Entities.Category", b =>
                 {
                     b.Property<int>("Id")
@@ -263,6 +288,34 @@ namespace EWMS.Api.Migrations
                     b.ToTable("GoodsReceiptSerial", (string)null);
                 });
 
+            modelBuilder.Entity("EWMS.Api.Entities.InboundExpectedSerial", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("InboundRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("InboundRequestItemId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SerialCode")
+                        .IsRequired()
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InboundRequestId", "SerialCode")
+                        .IsUnique();
+
+                    b.HasIndex("InboundRequestItemId", "InboundRequestId");
+
+                    b.ToTable("InboundExpectedSerial", (string)null);
+                });
+
             modelBuilder.Entity("EWMS.Api.Entities.InboundRequest", b =>
                 {
                     b.Property<int>("Id")
@@ -279,6 +332,9 @@ namespace EWMS.Api.Migrations
 
                     b.Property<DateTime?>("ExpectedDeliveryDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("HasSupplierManifest")
+                        .HasColumnType("bit");
 
                     b.Property<string>("RejectionReason")
                         .HasColumnType("varchar(255)");
@@ -1285,6 +1341,17 @@ namespace EWMS.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("EWMS.Api.Entities.AuthSession", b =>
+                {
+                    b.HasOne("EWMS.Api.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("EWMS.Api.Entities.Category", b =>
                 {
                     b.HasOne("EWMS.Api.Entities.Category", "Parent")
@@ -1411,6 +1478,18 @@ namespace EWMS.Api.Migrations
                     b.Navigation("GoodsReceiptItem");
 
                     b.Navigation("ScannedByUser");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.InboundExpectedSerial", b =>
+                {
+                    b.HasOne("EWMS.Api.Entities.InboundRequestItem", "InboundRequestItem")
+                        .WithMany()
+                        .HasForeignKey("InboundRequestItemId", "InboundRequestId")
+                        .HasPrincipalKey("Id", "InboundRequestId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("InboundRequestItem");
                 });
 
             modelBuilder.Entity("EWMS.Api.Entities.InboundRequest", b =>

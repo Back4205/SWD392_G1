@@ -17,6 +17,7 @@ namespace EWMS.Api.Data
         public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
         public DbSet<User> Users => Set<User>();
         public DbSet<UserWarehouse> UserWarehouses => Set<UserWarehouse>();
+        public DbSet<AuthSession> AuthSessions => Set<AuthSession>();
 
         // 2. Product & Supplier
         public DbSet<Category> Categories => Set<Category>();
@@ -40,6 +41,7 @@ namespace EWMS.Api.Data
         // 5. Goods Receipt & Serial
         public DbSet<GoodsReceipt> GoodsReceipts => Set<GoodsReceipt>();
         public DbSet<GoodsReceiptItem> GoodsReceiptItems => Set<GoodsReceiptItem>();
+        public DbSet<GoodsReceiptSerial> GoodsReceiptSerials => Set<GoodsReceiptSerial>();
         public DbSet<SerialNumber> SerialNumbers => Set<SerialNumber>();
 
         // 6. Transfer, Inventory, Outbound & History
@@ -57,9 +59,29 @@ namespace EWMS.Api.Data
         public DbSet<SerialMovement> SerialMovements => Set<SerialMovement>();
         public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
+        // Gọi sau BeginTransactionAsync. SQL giữ khóa đến khi Commit/Rollback.
+        // Cần khóa để hai request không cùng sử dụng một số lượng/sức chứa còn trống.
+        public Task LockGoodsReceiptAsync()
+        {
+            return Database.ExecuteSqlRawAsync(@"
+                DECLARE @result int;
+                EXEC @result = sys.sp_getapplock @Resource=N'EWMS:GoodsReceipt',
+                    @LockMode='Exclusive', @LockOwner='Transaction', @LockTimeout=15000;
+                IF @result < 0 THROW 51001, 'Goods receipt is busy. Try again.', 1;");
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<AuthSession>(e =>
+            {
+                e.ToTable("AuthSession");
+                e.HasKey(x => x.Id);
+                e.HasIndex(x => new { x.UserId, x.ExpiresAt });
+                e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
 
             // PERMISSION
             modelBuilder.Entity<Permission>(e =>
@@ -443,7 +465,9 @@ namespace EWMS.Api.Data
                 e.Property(x => x.ApprovalDate)
                     .HasColumnType("datetime2");
                 e.Property(x => x.RejectionReason)
-                    .HasColumnType("varchar(255)");
+                    .HasColumnType("nvarchar(255)");
+                e.Property(x => x.Version).IsRowVersion();
+                e.Property(x => x.UpdatedAt).HasColumnType("datetime2");
 
                 e.HasOne(x => x.InboundRequest).WithMany()
                     .HasForeignKey(x => x.InboundRequestId)
@@ -464,7 +488,8 @@ namespace EWMS.Api.Data
                 e.ToTable("GoodsReceiptItem");
                 e.HasKey(x => x.Id);
 
-                e.HasOne(x => x.GoodsReceipt).WithMany()
+                e.HasAlternateKey(x => new { x.Id, x.GoodsReceiptId });
+                e.HasOne(x => x.GoodsReceipt).WithMany(x => x.Items)
                     .HasForeignKey(x => x.GoodsReceiptId)
                     .OnDelete(DeleteBehavior.NoAction);
 
@@ -475,6 +500,20 @@ namespace EWMS.Api.Data
                 e.HasOne(x => x.Bin).WithMany()
                     .HasForeignKey(x => x.BinId)
                     .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            modelBuilder.Entity<GoodsReceiptSerial>(e =>
+            {
+                e.ToTable("GoodsReceiptSerial");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.SerialCode).HasColumnType("varchar(100)").IsRequired();
+                e.HasIndex(x => new { x.GoodsReceiptId, x.SerialCode }).IsUnique();
+                e.HasOne(x => x.GoodsReceiptItem).WithMany(x => x.Serials)
+                    .HasForeignKey(x => new { x.GoodsReceiptItemId, x.GoodsReceiptId })
+                    .HasPrincipalKey(x => new { x.Id, x.GoodsReceiptId })
+                    .OnDelete(DeleteBehavior.NoAction);
+                e.HasOne(x => x.ScannedByUser).WithMany()
+                    .HasForeignKey(x => x.ScannedByUserId).OnDelete(DeleteBehavior.NoAction);
             });
 
             // SERIAL NUMBER

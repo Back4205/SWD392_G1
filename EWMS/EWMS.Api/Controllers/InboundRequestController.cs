@@ -200,6 +200,10 @@ namespace EWMS.Api.Controllers
 
                 return Ok(progress);
             }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
             catch (ArgumentException ex)
             {
                 return BadRequest(new

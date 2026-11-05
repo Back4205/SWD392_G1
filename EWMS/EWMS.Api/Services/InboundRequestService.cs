@@ -294,66 +294,69 @@
             await _repository.UpdateAsync(request);
         }
 
-        // Task 6: Get Receiving Progress
-        public async Task<InboundReceivingProgressDto?> GetReceivingProgressAsync(
-            int inboundRequestId)
+        // Task 6: chỉ tính phiếu Goods Receipt đã được Manager duyệt.
+        public async Task<InboundReceivingProgressDto?> GetReceivingProgressAsync(int inboundRequestId)
         {
-            // 1. Validate request ID
             if (inboundRequestId <= 0)
             {
-                throw new ArgumentException(
-                    "Invalid inbound request ID.");
+                throw new ArgumentException("Invalid inbound request ID.");
             }
-
-            // 2. Find inbound request
             var request = await _repository.GetByIdAsync(inboundRequestId);
-
             if (request == null)
             {
                 return null;
             }
-
-            // 3. Get expected items
-            var requestItems =
-                await _repository.GetItemsByRequestIdAsync(inboundRequestId);
-
-            // 4. Calculate expected quantities
-            var totalExpectedQty = requestItems.Sum(
-                item => item.ExpectedQty
-            );
-
-            // 5. Get Goods Receipts for reference
-            var receipts =
-                await _repository.GetGoodsReceiptsByRequestIdAsync(inboundRequestId);
-
-            // Goods Receipt statuses have not been finalized.
-            // Do not count received quantities until valid statuses
-            // are agreed with the Goods Receipt module owner.
-
-            // 6. Build response
-            return new InboundReceivingProgressDto
+            var requestItems = await _repository.GetItemsByRequestIdAsync(inboundRequestId);
+            var receipts = await _repository.GetGoodsReceiptsByRequestIdAsync(inboundRequestId);
+            var approvedReceiptIds = receipts.Where(x => x.Status == "Approved")
+                .Select(x => x.Id).ToList();
+            var receivedItems = await _repository.GetGoodsReceiptItemsByReceiptIdsAsync(approvedReceiptIds);
+            var variantIds = requestItems.Select(x => x.ProductVariantId).Distinct().ToList();
+            if (requestItems.Count == 0 || requestItems.Any(x => x.ExpectedQty <= 0)
+                || receivedItems.Any(x => !variantIds.Contains(x.ProductVariantId)))
+            {
+                throw new InvalidOperationException("Inbound receiving quantities are inconsistent.");
+            }
+            var result = new InboundReceivingProgressDto
             {
                 InboundRequestId = inboundRequestId,
-                TotalExpectedQty = totalExpectedQty,
-
-                TotalReceivedQty = null,
-                RemainingQty = null,
-                ProgressPercentage = null,
-
-                ProgressStatus = "NotAvailable",
-
-                Items = requestItems
-                    .Select(item => new InboundReceivingProgressItemDto
-                    {
-                        ProductVariantId = item.ProductVariantId,
-                        ExpectedQty = item.ExpectedQty,
-                        ReceivedQty = null,
-                        RemainingQty = null
-                    })
-                    .ToList()
+                TotalExpectedQty = 0,
+                TotalReceivedQty = 0,
+                RemainingQty = 0
             };
+            foreach (int variantId in variantIds)
+            {
+                int expected = requestItems.Where(x => x.ProductVariantId == variantId).Sum(x => x.ExpectedQty);
+                int received = receivedItems.Where(x => x.ProductVariantId == variantId).Sum(x => x.ReceivedQty);
+                if (received < 0 || received > expected)
+                {
+                    throw new InvalidOperationException("Received quantity exceeds expected quantity for a variant.");
+                }
+                result.Items.Add(new InboundReceivingProgressItemDto
+                {
+                    ProductVariantId = variantId,
+                    ExpectedQty = expected,
+                    ReceivedQty = received,
+                    RemainingQty = expected - received
+                });
+                result.TotalExpectedQty += expected;
+                result.TotalReceivedQty += received;
+                result.RemainingQty += expected - received;
+            }
+            result.ProgressPercentage = Math.Round(100.0 * result.TotalReceivedQty.Value / result.TotalExpectedQty, 2);
+            if (result.Items.All(x => x.RemainingQty == 0))
+            {
+                result.ProgressStatus = "Completed";
+            }
+            else if (result.TotalReceivedQty > 0)
+            {
+                result.ProgressStatus = "PartiallyReceived";
+            }
+            else
+            {
+                result.ProgressStatus = "Pending";
+            }
+            return result;
         }
-
-
     }
 }

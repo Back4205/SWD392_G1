@@ -19,6 +19,13 @@ namespace EWMS.Api.Entities
 
         public string? RejectionReason { get; set; }
 
+        // SQL tự tạo Version mới khi phiếu thay đổi, giúp phát hiện người dùng đang sửa bản cũ.
+        public byte[] Version { get; set; } = Array.Empty<byte>();
+
+        public DateTime UpdatedAt { get; set; }
+
+        public List<GoodsReceiptItem> Items { get; set; } = new List<GoodsReceiptItem>();
+
         public InboundRequest InboundRequest { get; set; } = null!;
 
         public User ReceivedByUser { get; set; } = null!;

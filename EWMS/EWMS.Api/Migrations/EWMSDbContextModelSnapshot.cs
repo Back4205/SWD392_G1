@@ -170,11 +170,20 @@ namespace EWMS.Api.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("RejectionReason")
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("varchar(30)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.HasKey("Id");
 
@@ -195,7 +204,7 @@ namespace EWMS.Api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("BinId")
+                    b.Property<int?>("BinId")
                         .HasColumnType("int");
 
                     b.Property<int>("GoodsReceiptId")
@@ -216,6 +225,42 @@ namespace EWMS.Api.Migrations
                     b.HasIndex("ProductVariantId");
 
                     b.ToTable("GoodsReceiptItem", (string)null);
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.GoodsReceiptSerial", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("GoodsReceiptId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GoodsReceiptItemId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ScannedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ScannedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SerialCode")
+                        .IsRequired()
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ScannedByUserId");
+
+                    b.HasIndex("GoodsReceiptId", "SerialCode")
+                        .IsUnique();
+
+                    b.HasIndex("GoodsReceiptItemId", "GoodsReceiptId");
+
+                    b.ToTable("GoodsReceiptSerial", (string)null);
                 });
 
             modelBuilder.Entity("EWMS.Api.Entities.InboundRequest", b =>
@@ -1327,11 +1372,10 @@ namespace EWMS.Api.Migrations
                     b.HasOne("EWMS.Api.Entities.StorageBin", "Bin")
                         .WithMany()
                         .HasForeignKey("BinId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("EWMS.Api.Entities.GoodsReceipt", "GoodsReceipt")
-                        .WithMany()
+                        .WithMany("Items")
                         .HasForeignKey("GoodsReceiptId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
@@ -1347,6 +1391,26 @@ namespace EWMS.Api.Migrations
                     b.Navigation("GoodsReceipt");
 
                     b.Navigation("ProductVariant");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.GoodsReceiptSerial", b =>
+                {
+                    b.HasOne("EWMS.Api.Entities.User", "ScannedByUser")
+                        .WithMany()
+                        .HasForeignKey("ScannedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EWMS.Api.Entities.GoodsReceiptItem", "GoodsReceiptItem")
+                        .WithMany("Serials")
+                        .HasForeignKey("GoodsReceiptItemId", "GoodsReceiptId")
+                        .HasPrincipalKey("Id", "GoodsReceiptId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("GoodsReceiptItem");
+
+                    b.Navigation("ScannedByUser");
                 });
 
             modelBuilder.Entity("EWMS.Api.Entities.InboundRequest", b =>
@@ -1893,6 +1957,16 @@ namespace EWMS.Api.Migrations
             modelBuilder.Entity("EWMS.Api.Entities.DeliveryOrderItem", b =>
                 {
                     b.Navigation("DispatchedSerialNumbers");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.GoodsReceipt", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.GoodsReceiptItem", b =>
+                {
+                    b.Navigation("Serials");
                 });
 
             modelBuilder.Entity("EWMS.Api.Entities.InventorySheet", b =>

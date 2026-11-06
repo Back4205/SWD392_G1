@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createGoodsReceipt, getReceivableInbounds } from "./goodsReceipt.api";
 import type { ReceivableInbound } from "./goodsReceipt.types";
 import { receiptErrorMessage } from "./receipt.helpers";
@@ -12,6 +12,7 @@ export default function CreateGoodsReceiptPage({ busy, onBusyChange, basePath }:
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
+  const creating = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -34,7 +35,8 @@ export default function CreateGoodsReceiptPage({ busy, onBusyChange, basePath }:
   const selected = inbounds.find(inbound => inbound.id === selectedId);
 
   async function handleCreate() {
-    if (!selected || busy) return;
+    if (!selected || busy || creating.current) return;
+    creating.current = true;
     onBusyChange(true);
     setError("");
     try {
@@ -43,6 +45,7 @@ export default function CreateGoodsReceiptPage({ busy, onBusyChange, basePath }:
     } catch (err) {
       setError(receiptErrorMessage(err));
     } finally {
+      creating.current = false;
       onBusyChange(false);
     }
   }

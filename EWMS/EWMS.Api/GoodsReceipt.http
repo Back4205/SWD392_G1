@@ -49,8 +49,8 @@ Content-Type: application/json
 
 {
   "expectedVersion": "{{expectedVersion}}",
-  "serialCode": "DEMO-001",
-  "sku": "GR-DEMO-SKU"
+  "serialCode": "SERIAL-001",
+  "sku": "YOUR-SKU"
 }
 
 ### UC-18 SAVE_DRAFT: chọn bin sau scan, dùng Version mới nhất
@@ -81,7 +81,9 @@ POST {{baseUrl}}/api/goods-receipts/{{receiptId}}/approve
 X-CSRF-TOKEN: {{csrfToken}}
 Content-Type: application/json
 
-{ "expectedVersion": "{{expectedVersion}}" }
+{
+  "expectedVersion": "{{expectedVersion}}"
+}
 
 ### UC-56 REJECT: dùng một phiếu PendingApproval KHÁC, không dùng phiếu đã Approved
 POST {{baseUrl}}/api/goods-receipts/{{receiptId}}/reject

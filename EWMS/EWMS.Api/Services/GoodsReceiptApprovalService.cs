@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using EWMS.Api.Common;
 using EWMS.Api.Data;
 using EWMS.Api.DTOs.GoodsReceipts;
@@ -76,6 +76,9 @@ namespace EWMS.Api.Services
 
                 // 5. Lưu Approved trước để bước tính tiến độ thấy phiếu vừa duyệt.
                 receipt.Status = GoodsReceiptStatus.Approved;
+                // UC-56 không yêu cầu ghi chú duyệt; giữ cột cũ để đọc lịch sử.
+                receipt.ApprovalNote = null;
+                receipt.RejectionReason = null;
                 receipt.ApprovedByUserId = userId;
                 receipt.ApprovalDate = DateTime.UtcNow;
                 _receiptService.MarkChanged(receipt);
@@ -115,6 +118,7 @@ namespace EWMS.Api.Services
                     throw new GoodsReceiptException(400, "GR_REJECTION_REASON", "A rejection reason of 1-255 characters is required.");
                 }
                 receipt.Status = GoodsReceiptStatus.Rejected;
+                receipt.ApprovalNote = null;
                 receipt.RejectionReason = reason;
                 receipt.ApprovedByUserId = userId;
                 receipt.ApprovalDate = DateTime.UtcNow;

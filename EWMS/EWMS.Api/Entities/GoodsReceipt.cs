@@ -19,6 +19,8 @@ namespace EWMS.Api.Entities
 
         public string? RejectionReason { get; set; }
 
+        public string? ApprovalNote { get; set; }
+
         // SQL tự tạo Version mới khi phiếu thay đổi, giúp phát hiện người dùng đang sửa bản cũ.
         public byte[] Version { get; set; } = Array.Empty<byte>();
 

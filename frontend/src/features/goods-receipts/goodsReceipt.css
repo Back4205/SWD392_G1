@@ -1,25 +1,14 @@
 /* CSS riêng module nhận hàng, dùng tiền tố gr- để không đè giao diện Inbound. */
-.gr-comparison { margin-bottom: 24px; }
-.gr-comparison .gr-panel-heading { align-items: flex-start; }
-.gr-comparison .gr-eyebrow { margin-bottom: 10px; }
-.gr-comparison-legacy { padding: 24px; margin-bottom: 24px; }
-.gr-comparison-legacy p { margin-top: 10px; color: #6b7b90; font-size: 13px; }
-.gr-comparison-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 0 24px 20px; }
-.gr-comparison-metrics > div { background: #f5f8fd; padding: 15px; border-radius: 8px; display: grid; gap: 8px; }
-.gr-comparison-metrics span { color: #687b95; font-size: 11px; }
-.gr-comparison-metrics strong { color: #233f67; font-size: 24px; }
-.gr-comparison-filters { display: grid; grid-template-columns: 1fr 240px; gap: 16px; padding: 0 24px 22px; }
-.gr-comparison-table code { font-size: 12px; overflow-wrap: anywhere; }
-.gr-compare-badge { display: inline-block; padding: 5px 9px; border-radius: 5px; font-size: 11px; white-space: nowrap; background: #f0f3f7; color: #63758d; }
-.gr-compare-badge--ScannedThisReceipt { background: #eaf2ff; color: #245ac9; }
-.gr-compare-badge--Received { background: #e7f4ee; color: #267052; }
-.gr-compare-badge--ScannedOtherReceipt { background: #fff3dd; color: #886015; }
-.gr-compare-badge--Rejected { background: #fff0f0; color: #af3838; }
-.gr-comparison-note { padding: 18px 24px; font-size: 12px; color: #697c95; border-top: 1px solid #edf0f5; }
-@media (max-width: 760px) {
-  .gr-comparison-metrics { grid-template-columns: 1fr 1fr; padding-inline: 16px; }
-  .gr-comparison-filters { grid-template-columns: 1fr; padding-inline: 16px; }
-}
+.gr-decision-record { margin-bottom: 24px; border-left: 3px solid #3b8769; }
+.gr-decision-record--rejected { border-left-color: #b9434f; }
+.gr-decision-record .gr-eyebrow { margin-bottom: 9px; }
+.gr-decision-metadata { display: flex; flex-wrap: wrap; gap: 20px 44px; padding: 0 24px 20px; }
+.gr-decision-metadata > div { display: grid; gap: 7px; }
+.gr-decision-metadata span { font-size: 11px; color: #71829a; }
+.gr-decision-metadata strong { font-size: 13px; font-weight: 600; color: #304c70; }
+.gr-decision-note { padding: 0 24px 24px; }
+.gr-decision-note h3 { font-size: 13px; color: #4b607c; margin-bottom: 9px; }
+.gr-decision-note p { white-space: pre-wrap; overflow-wrap: anywhere; background: #f5f8fc; border-radius: 7px; padding: 14px 16px; color: #263e60; line-height: 1.8; }
 .gr-workspace {
   color: #233650;
   font-size: 14px;

@@ -1,4 +1,3 @@
-param([switch]$ResetPasswords)
 $ErrorActionPreference = 'Stop'
 $apiProcess = $null
 $webProcess = $null
@@ -8,23 +7,10 @@ $frontendRoot = Join-Path $projectRoot 'frontend'
 $runtimeDirectory = Join-Path $projectRoot '.local'
 New-Item -ItemType Directory -Path $runtimeDirectory -Force | Out-Null
 
-# Database local riêng; không sửa appsettings.json của nhóm.
+# Dùng database local hiện có; không tự thêm tài khoản hoặc dữ liệu mẫu.
 $env:ASPNETCORE_ENVIRONMENT = 'Development'
 $env:ConnectionStrings__EWMSDatabase = 'Server=.;Database=EWMS_GoodsReceipt_Development;Integrated Security=true;TrustServerCertificate=true;Encrypt=false'
-$env:GoodsReceipts__SeedDevelopmentData = 'true'
-$env:DevelopmentData__ResetPasswords = $ResetPasswords.IsPresent.ToString().ToLowerInvariant()
-
-# Nhập lần đầu hoặc khi dùng -ResetPasswords. Không có mật khẩu mặc định.
-Write-Host 'Tai khoan local: manager / staff / purchasing.'
-Write-Host 'Lan dau: nhap mat khau 12-128 ky tu. Da khoi tao: Enter de giu mat khau cu.'
-$initialSecret = Read-Host 'Mat khau khoi tao' -AsSecureString
-$passwordPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($initialSecret)
 try {
-    $env:DevelopmentData__InitialPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($passwordPointer)
-    if (($ResetPasswords -or $env:DevelopmentData__InitialPassword.Length -gt 0) -and
-        ($env:DevelopmentData__InitialPassword.Length -lt 12 -or $env:DevelopmentData__InitialPassword.Length -gt 128)) {
-        throw 'Mat khau phai co 12-128 ky tu.'
-    }
     foreach ($webPort in @(5085, 5173)) {
         if (Get-NetTCPConnection -LocalPort $webPort -State Listen -ErrorAction SilentlyContinue) {
             throw "Cong $webPort dang duoc su dung. Dung ung dung cu truoc khi chay lai."
@@ -51,9 +37,6 @@ try {
         } catch { Start-Sleep -Milliseconds 500 }
     }
     if (!$apiReady) { throw 'API chua san sang. Xem .local/api.log.' }
-    # API đã nhận environment riêng; frontend không cần nhận mật khẩu bootstrap.
-    Remove-Item Env:DevelopmentData__InitialPassword -ErrorAction SilentlyContinue
-    Remove-Item Env:DevelopmentData__ResetPasswords -ErrorAction SilentlyContinue
     $webProcess = Start-Process node -ArgumentList @('node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', '5173', '--strictPort') -WorkingDirectory $frontendRoot -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $runtimeDirectory 'web.log') -RedirectStandardError (Join-Path $runtimeDirectory 'web-error.log')
     @($apiProcess, $webProcess) | Select-Object Id, ProcessName, @{Name='StartTimeUtcTicks'; Expression={$_.StartTime.ToUniversalTime().Ticks}} | ConvertTo-Json | Set-Content (Join-Path $runtimeDirectory 'processes.json') -Encoding UTF8
     Write-Host 'Web: http://127.0.0.1:5173/login'
@@ -63,8 +46,4 @@ try {
     if ($webProcess -and !$webProcess.HasExited) { Stop-Process -Id $webProcess.Id -ErrorAction SilentlyContinue }
     if ($apiProcess -and !$apiProcess.HasExited) { Stop-Process -Id $apiProcess.Id -ErrorAction SilentlyContinue }
     throw
-} finally {
-    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($passwordPointer)
-    Remove-Item Env:DevelopmentData__InitialPassword -ErrorAction SilentlyContinue
-    Remove-Item Env:DevelopmentData__ResetPasswords -ErrorAction SilentlyContinue
 }

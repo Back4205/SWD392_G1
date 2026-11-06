@@ -182,6 +182,9 @@ namespace EWMS.Api.Migrations
                     b.Property<DateTime?>("ApprovalDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("ApprovalNote")
+                        .HasColumnType("nvarchar(255)");
+
                     b.Property<int?>("ApprovedByUserId")
                         .HasColumnType("int");
 
@@ -324,10 +327,19 @@ namespace EWMS.Api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("ApprovalNote")
+                        .HasColumnType("nvarchar(255)");
+
                     b.Property<int?>("ApprovedByUserId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("AssignedStaffUserId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DecisionDate")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("ExpectedDeliveryDate")
@@ -337,7 +349,7 @@ namespace EWMS.Api.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("RejectionReason")
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<int>("RequestedByUserId")
                         .HasColumnType("int");
@@ -358,6 +370,8 @@ namespace EWMS.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ApprovedByUserId");
+
+                    b.HasIndex("AssignedStaffUserId");
 
                     b.HasIndex("RequestedByUserId");
 
@@ -1499,6 +1513,11 @@ namespace EWMS.Api.Migrations
                         .HasForeignKey("ApprovedByUserId")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.HasOne("EWMS.Api.Entities.User", "AssignedStaffUser")
+                        .WithMany()
+                        .HasForeignKey("AssignedStaffUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("EWMS.Api.Entities.User", "RequestedByUser")
                         .WithMany()
                         .HasForeignKey("RequestedByUserId")
@@ -1517,6 +1536,8 @@ namespace EWMS.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("ApprovedByUser");
+
+                    b.Navigation("AssignedStaffUser");
 
                     b.Navigation("RequestedByUser");
 

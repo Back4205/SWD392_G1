@@ -8,6 +8,7 @@ interface Props { onBack: () => void; onCreated: (id: number) => void; }
 export default function CreateInboundRequestPage({ onBack, onCreated }: Props) {
   const [lookups, setLookups] = useState<InboundLookups | null>(null);
   const [warehouseId, setWarehouseId] = useState("");
+  const [assignedStaffUserId, setAssignedStaffUserId] = useState("");
   const [items, setItems] = useState<CreateInboundRequestItem[]>([{ productVariantId: 0, expectedQty: 1 }]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -38,6 +39,9 @@ export default function CreateInboundRequestPage({ onBack, onCreated }: Props) {
     if (!lookups?.warehouses.some(x => x.id === Number(warehouseId))) {
       setError("Chọn kho nhận hàng trong danh sách được phân công."); return;
     }
+    if (!lookups.warehouseStaff.some(x => x.userId === Number(assignedStaffUserId) && x.warehouseId === Number(warehouseId))) {
+      setError("Chọn nhân viên kho đang hoạt động và được phân công vào kho nhận hàng."); return;
+    }
     if (items.some(x => !lookups.productVariants.some(p => p.id === x.productVariantId) || !Number.isInteger(x.expectedQty) || x.expectedQty <= 0)) {
       setError("Chọn sản phẩm và nhập số lượng nguyên lớn hơn 0 cho từng dòng."); return;
     }
@@ -46,7 +50,7 @@ export default function CreateInboundRequestPage({ onBack, onCreated }: Props) {
     }
     submitting.current = true; setSaving(true);
     try {
-      const result = await createInboundRequest({ warehouseId: Number(warehouseId), items });
+      const result = await createInboundRequest({ warehouseId: Number(warehouseId), assignedStaffUserId: Number(assignedStaffUserId), items });
       onCreated(result.id);
     } catch (err) { setError(inboundError(err)); }
     finally { submitting.current = false; setSaving(false); }
@@ -60,9 +64,13 @@ export default function CreateInboundRequestPage({ onBack, onCreated }: Props) {
       <fieldset disabled={saving} className="ib-fieldset">
         <section className="gr-panel ib-section">
           <div className="gr-section-label"><span>1</span><div><h2>Kho nhận hàng</h2><p>Chỉ hiển thị những kho bạn được phân công quản lý.</p></div></div>
-          <label className="ib-field">Kho nhận<select required value={warehouseId} onChange={event => setWarehouseId(event.target.value)}>
+          <label className="ib-field">Kho nhận<select required value={warehouseId} onChange={event => { setWarehouseId(event.target.value); setAssignedStaffUserId(""); }}>
             <option value="">Chọn kho…</option>{lookups.warehouses.map(warehouse => <option key={warehouse.id} value={warehouse.id}>{warehouse.warehouseName}</option>)}
           </select></label>
+          <label className="ib-field">Nhân viên kho được phân công<select required disabled={!warehouseId} value={assignedStaffUserId} onChange={event => setAssignedStaffUserId(event.target.value)}>
+            <option value="">Chọn nhân viên kho…</option>{lookups.warehouseStaff.filter(staff => staff.warehouseId === Number(warehouseId)).map(staff => <option key={staff.userId} value={staff.userId}>{staff.fullName}</option>)}
+          </select></label>
+          {warehouseId && !lookups.warehouseStaff.some(staff => staff.warehouseId === Number(warehouseId)) && <p className="ib-muted">Kho chưa có nhân viên đang hoạt động được phân công. Liên hệ quản trị viên để cập nhật phân công kho.</p>}
           {lookups.warehouses.length === 0 && <p className="ib-muted">Tài khoản chưa được phân công kho. Liên hệ quản trị viên để được cấp quyền.</p>}
         </section>
         <section className="gr-panel ib-section">

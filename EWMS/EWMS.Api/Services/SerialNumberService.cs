@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using EWMS.Api.Common;
 using EWMS.Api.Data;
 using EWMS.Api.DTOs.GoodsReceipts;
@@ -50,16 +50,6 @@ namespace EWMS.Api.Services
                 if (scannedBefore || alreadyInStock)
                 {
                     throw new GoodsReceiptException(409, "MSG158", "Serial/IMEI already exists.");
-                }
-                if (receipt.InboundRequest.HasSupplierManifest)
-                {
-                    // Một thiết bị không được quét vào hai phiếu đang xử lý cùng lúc.
-                    bool inAnotherReceipt = await _context.GoodsReceiptSerials.AnyAsync(x =>
-                        x.GoodsReceiptId != id && x.SerialCode == dto.SerialCode
-                        && (x.GoodsReceiptItem.GoodsReceipt.Status == "Draft"
-                            || x.GoodsReceiptItem.GoodsReceipt.Status == "PendingApproval"));
-                    if (inAnotherReceipt)
-                        throw new GoodsReceiptException(409, "GR_SERIAL_IN_ANOTHER_RECEIPT", "Serial is being processed in another receipt.");
                 }
                 var scan = new GoodsReceiptSerial
                 {

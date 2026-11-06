@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using EWMS.Api.Common;
 using EWMS.Api.Data;
 using EWMS.Api.DTOs.GoodsReceipts;
@@ -450,8 +450,6 @@ namespace EWMS.Api.Services
                     throw new GoodsReceiptException(409, "MSG95", "Received quantity exceeds remaining quantity.");
                 }
             }
-            // Đối chiếu cả lúc scan, lưu nháp, gửi duyệt và duyệt; không chỉ kiểm tra ở giao diện.
-            await ValidateSupplierManifestAsync(receipt);
             // MSG93: chưa nhận thiết bị nào thì không gửi duyệt được.
             if (isSubmission && receipt.Items.Sum(x => x.ReceivedQty) == 0)
             {
@@ -464,36 +462,6 @@ namespace EWMS.Api.Services
                 throw new GoodsReceiptException(409, "MSG158", "A serial is already registered in inventory.");
             }
             await _stockService.ValidateCapacityAsync(receipt, isSubmission);
-        }
-
-        public async Task ValidateSupplierManifestAsync(GoodsReceipt receipt)
-        {
-            // Inbound đã duyệt từ trước khi có bảng kê vẫn được xem/nhận tiếp.
-            // Inbound mới chỉ được Manager duyệt khi Purchasing đã nhập đủ bảng kê.
-            if (!receipt.InboundRequest.HasSupplierManifest) return;
-            var expected = await _context.InboundExpectedSerials.AsNoTracking()
-                .Where(x => x.InboundRequestId == receipt.InboundRequestId)
-                .Include(x => x.InboundRequestItem).ToListAsync();
-            var lines = await _inboundService.GetLinesAsync(receipt.InboundRequestId);
-            if (receipt.InboundRequest.SupplierCommitmentStatus != "Confirmed"
-                || expected.Count != lines.Sum(x => x.ExpectedQty)
-                || expected.Select(x => x.SerialCode).Distinct(StringComparer.OrdinalIgnoreCase).Count() != expected.Count
-                || expected.Any(x => !lines.Any(line => line.ProductVariantId == x.InboundRequestItem.ProductVariantId))
-                || lines.Any(line => expected.Count(x => x.InboundRequestItem.ProductVariantId == line.ProductVariantId) != line.ExpectedQty))
-            {
-                throw new GoodsReceiptException(409, "IN_MANIFEST_REQUIRED", "Supplier serial declaration is incomplete or inconsistent.");
-            }
-            foreach (var item in receipt.Items)
-            {
-                foreach (var scan in item.Serials)
-                {
-                    var declared = expected.SingleOrDefault(x => string.Equals(x.SerialCode, scan.SerialCode, StringComparison.OrdinalIgnoreCase));
-                    if (declared == null)
-                        throw new GoodsReceiptException(400, "GR_SERIAL_NOT_EXPECTED", "Serial is not declared for this inbound request.");
-                    if (declared.InboundRequestItem.ProductVariantId != item.ProductVariantId)
-                        throw new GoodsReceiptException(400, "GR_SERIAL_WRONG_SKU", "Serial is declared for a different SKU.");
-                }
-            }
         }
 
         public void MarkChanged(GoodsReceipt receipt)
@@ -516,19 +484,13 @@ namespace EWMS.Api.Services
                 Status = receipt.Status,
                 Version = Convert.ToBase64String(receipt.Version),
                 DecidedByUserId = receipt.ApprovedByUserId,
+                DecidedByName = receipt.ApprovedByUserId.HasValue
+                    ? await _context.Users.Where(x => x.Id == receipt.ApprovedByUserId.Value).Select(x => x.FullName).SingleOrDefaultAsync()
+                    : null,
                 DecisionDate = receipt.ApprovalDate,
                 RejectionReason = receipt.RejectionReason,
-                HasSupplierManifest = receipt.InboundRequest.HasSupplierManifest
+                ApprovalNote = receipt.ApprovalNote
             };
-            var expectedSerials = await _context.InboundExpectedSerials.AsNoTracking()
-                .Where(x => x.InboundRequestId == receipt.InboundRequestId)
-                .Include(x => x.InboundRequestItem).OrderBy(x => x.Id).ToListAsync();
-            // Đọc trạng thái nhận qua các đợt; phiếu từ chối không giữ serial đã khai báo.
-            var activeScans = await _context.GoodsReceiptSerials.AsNoTracking()
-                .Where(x => x.GoodsReceiptItem.GoodsReceipt.InboundRequestId == receipt.InboundRequestId
-                    && x.GoodsReceiptItem.GoodsReceipt.Status != "Rejected")
-                .Select(x => new { x.SerialCode, x.GoodsReceiptId, x.GoodsReceiptItem.ProductVariantId,
-                    Status = x.GoodsReceiptItem.GoodsReceipt.Status }).ToListAsync();
             foreach (var item in receipt.Items.OrderBy(x => x.Id))
             {
                 var line = lines.Single(x => x.ProductVariantId == item.ProductVariantId);
@@ -554,20 +516,6 @@ namespace EWMS.Api.Services
                         ReceivedQty = item.ReceivedQty,
                         Version = result.Version
                     });
-                }
-                foreach (var declared in expectedSerials.Where(x => x.InboundRequestItem.ProductVariantId == item.ProductVariantId))
-                {
-                    // Ưu tiên đã duyệt > quét phiếu này > quét phiếu khác > chưa nhận.
-                    var matches = activeScans.Where(x => x.ProductVariantId == item.ProductVariantId
-                        && string.Equals(x.SerialCode, declared.SerialCode, StringComparison.OrdinalIgnoreCase)).ToList();
-                    var approved = matches.FirstOrDefault(x => x.Status == "Approved");
-                    var here = matches.FirstOrDefault(x => x.GoodsReceiptId == receipt.Id);
-                    var other = matches.FirstOrDefault();
-                    var expectedDto = new ExpectedReceiptSerialDto { SerialCode = declared.SerialCode };
-                    if (approved != null) { expectedDto.Status = "Received"; expectedDto.ReceiptId = approved.GoodsReceiptId; expectedDto.ScannedSerialCode = approved.SerialCode; }
-                    else if (here != null) { expectedDto.Status = "ScannedThisReceipt"; expectedDto.ReceiptId = receipt.Id; expectedDto.ScannedSerialCode = here.SerialCode; }
-                    else if (other != null) { expectedDto.Status = "ScannedOtherReceipt"; expectedDto.ReceiptId = other.GoodsReceiptId; expectedDto.ScannedSerialCode = other.SerialCode; }
-                    itemDto.ExpectedSerials.Add(expectedDto);
                 }
                 result.Items.Add(itemDto);
             }

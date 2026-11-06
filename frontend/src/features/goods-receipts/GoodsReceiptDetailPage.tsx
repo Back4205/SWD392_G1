@@ -7,7 +7,6 @@ import type { GoodsReceipt, ReceiptBin, ReceiptSession } from "./goodsReceipt.ty
 import { formatReceiptDate, isStaleReceipt, receiptErrorMessage } from "./receipt.helpers";
 import ReceiptStatusBadge from "./ReceiptStatusBadge";
 import ReceiptDecisionDialog from "./ReceiptDecisionDialog";
-import ReceiptSerialComparison from "./ReceiptSerialComparison";
 import { navigateTo } from "../../hooks/useAppRoute";
 
 interface Props {
@@ -156,12 +155,12 @@ export default function GoodsReceiptDetailPage({ receiptId, session, busy, onBus
     }
   }
 
-  async function handleDecision(reason: string) {
+  async function handleDecision(note: string) {
     if (!receipt || !decision || !beginWrite()) return;
     try {
       const result = decision === "approve"
         ? await approveGoodsReceipt(receipt.id, receipt.version)
-        : await rejectGoodsReceipt(receipt.id, receipt.version, reason);
+        : await rejectGoodsReceipt(receipt.id, receipt.version, note);
       setReceipt(result);
       setDecision(null);
       setNotice(result.status === "Approved" ? "Đã duyệt phiếu. Tồn kho, serial và tiến độ Inbound đã được cập nhật." : "Đã từ chối phiếu và lưu lý do. Tồn kho không thay đổi.");
@@ -192,11 +191,15 @@ export default function GoodsReceiptDetailPage({ receiptId, session, busy, onBus
     {binError && <div className="gr-alert gr-alert--info" role="status">Không tải được tên/vị trí bin: {binError} Đang hiển thị mã bin đã lưu. <button className="gr-text-button" disabled={busy} onClick={() => setReloadKey(value => value + 1)}>Thử tải lại</button></div>}
     {notice && <div className="gr-alert gr-alert--success" role="status">{notice}</div>}
     {receipt.status === "PendingApproval" && <div className="gr-alert gr-alert--info">Phiếu đang chờ Manager duyệt. Thông tin đã được khóa; hàng chưa được cộng vào tồn kho.</div>}
-    {receipt.status === "Rejected" && <div className="gr-alert gr-alert--error"><strong>Lý do từ chối</strong><p>{receipt.rejectionReason}</p></div>}
     {receipt.status === "Approved" && <div className="gr-alert gr-alert--success">Phiếu đã được duyệt {receipt.decisionDate && `lúc ${formatReceiptDate(receipt.decisionDate)}`}. Hàng đã được nhập kho.</div>}
     {receipt.status === "Draft" && !editable && <div className="gr-alert gr-alert--info">Chế độ chỉ xem. Chỉ nhân viên tạo phiếu mới được chỉnh sửa bản nháp.</div>}
 
-    <ReceiptSerialComparison receipt={receipt} />
+    {(receipt.status === "Approved" || receipt.status === "Rejected") && <section className={`gr-panel gr-decision-record${receipt.status === "Rejected" ? " gr-decision-record--rejected" : ""}`}>
+      <div className="gr-panel-heading"><div><p className="gr-eyebrow">QUYẾT ĐỊNH CỦA QUẢN LÝ</p><h2>{receipt.status === "Rejected" ? "Phiếu đã bị từ chối" : "Phiếu đã được phê duyệt"}</h2></div></div>
+      <div className="gr-decision-metadata"><div><span>Người quyết định</span><strong>{receipt.decidedByName || (receipt.decidedByUserId ? `Tài khoản #${receipt.decidedByUserId}` : "Chưa lưu người quyết định")}</strong></div><div><span>Thời điểm quyết định</span><strong>{receipt.decisionDate ? formatReceiptDate(receipt.decisionDate) : "Chưa lưu thời điểm"}</strong></div></div>
+      {(receipt.status === "Rejected" || receipt.approvalNote) && <div className="gr-decision-note"><h3>{receipt.status === "Rejected" ? "Lý do từ chối" : "Ghi chú đã lưu"}</h3><p>{receipt.status === "Rejected" ? receipt.rejectionReason || "Chưa có lý do từ chối được lưu." : receipt.approvalNote}</p></div>}
+    </section>}
+
 
     {editable && <section className="gr-scan-panel" aria-labelledby="gr-scan-title">
       <div><p className="gr-eyebrow">NHẬN TỪNG THIẾT BỊ</p><h2 id="gr-scan-title">Quét Serial / IMEI</h2><p>Chọn đúng sản phẩm, quét mã và nhấn Enter. Mỗi mã hợp lệ được tính một thiết bị.</p></div>

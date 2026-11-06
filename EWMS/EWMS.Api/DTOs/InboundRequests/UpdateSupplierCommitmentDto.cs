@@ -15,13 +15,15 @@ namespace EWMS.Api.DTOs.InboundRequests
 
         public DateTime? ExpectedDeliveryDate { get; set; }
 
-        public List<SupplierManifestItemDto> Items { get; set; } = new();
+        public List<ConfirmedInboundItemDto> Items { get; set; } = new();
+
+        public string? ExpectedRevision { get; set; }
     }
 
-    public class SupplierManifestItemDto
+    public class ConfirmedInboundItemDto
     {
         public int ItemId { get; set; }
-        public string SKU { get; set; } = string.Empty;
-        public List<string> SerialCodes { get; set; } = new();
+        public int ProductVariantId { get; set; }
+        public int ExpectedQty { get; set; }
     }
 }

@@ -110,12 +110,12 @@ public class AuthenticationHttpTests
         using var db = _fixture.CreateContext();
         var users=await db.Users.Where(x=>new[]{data.StaffId,data.ManagerId,data.PurchasingUserId,data.OtherUserId}.Contains(x.Id)).ToDictionaryAsync(x=>x.Id,x=>x.UserName);
         await AuthTestHelper.LoginAsync(client,users[data.StaffId]);
-        Assert.Equal(HttpStatusCode.Forbidden,(await client.PostAsJsonAsync("/api/inbound-requests",new {warehouseId=data.WarehouseId,items=new[]{new{productVariantId=data.VariantId,expectedQty=2}}})).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,(await client.PostAsJsonAsync("/api/inbound-requests",new {warehouseId=data.WarehouseId,assignedStaffUserId=data.StaffId,items=new[]{new{productVariantId=data.VariantId,expectedQty=2}}})).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden,(await client.PutAsJsonAsync($"/api/inbound-requests/{data.InboundId}/review",new{decision="Approved"})).StatusCode);
         await AuthTestHelper.LoginAsync(client,users[data.ManagerId]);
-        Assert.Equal(HttpStatusCode.Forbidden,(await client.PostAsJsonAsync("/api/inbound-requests",new {warehouseId=data.OtherWarehouseId,items=new[]{new{productVariantId=data.VariantId,expectedQty=2}}})).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,(await client.PostAsJsonAsync("/api/inbound-requests",new {warehouseId=data.OtherWarehouseId,assignedStaffUserId=data.OtherUserId,items=new[]{new{productVariantId=data.VariantId,expectedQty=2}}})).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden,(await client.PutAsJsonAsync($"/api/inbound-requests/{data.InboundId}/supplier-commitment",new{supplierId=1,commitmentStatus="Confirmed"})).StatusCode);
-        var create=await client.PostAsJsonAsync("/api/inbound-requests",new {warehouseId=data.WarehouseId,items=new[]{new{productVariantId=data.VariantId,expectedQty=2}}});
+        var create=await client.PostAsJsonAsync("/api/inbound-requests",new {warehouseId=data.WarehouseId,assignedStaffUserId=data.StaffId,items=new[]{new{productVariantId=data.VariantId,expectedQty=2}}});
         Assert.Equal(HttpStatusCode.Created,create.StatusCode);
         int id=(await create.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
         Assert.Equal(data.ManagerId,(await db.InboundRequests.FindAsync(id))!.RequestedByUserId);

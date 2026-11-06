@@ -246,6 +246,10 @@ namespace EWMS.Api.Controllers
         public async Task<IActionResult> GetLookups()
         {
             var warehouses = await AssignedWarehousesAsync();
+            var products = await _context.ProductVariants.AsNoTracking()
+                .Where(x => x.Product != null && x.Product.Status == "Active" && x.WeightKg > 0)
+                .OrderBy(x => x.SKU)
+                .Select(x => new { x.Id, sku = x.SKU, productName = x.Product!.ProductName }).ToListAsync();
             return Ok(new
             {
                 warehouses = await _context.Warehouses.AsNoTracking()
@@ -253,9 +257,13 @@ namespace EWMS.Api.Controllers
                     .OrderBy(x => x.WarehouseName).Select(x => new { x.Id, x.WarehouseName }).ToListAsync(),
                 suppliers = await _context.Suppliers.AsNoTracking().Where(x => x.Status == "Active")
                     .OrderBy(x => x.SupplierName).Select(x => new { x.Id, x.SupplierName }).ToListAsync(),
-                productVariants = await _context.ProductVariants.AsNoTracking()
-                    .Where(x => x.Product != null && x.Product.Status == "Active")
-                    .OrderBy(x => x.SKU).Select(x => new { x.Id, sku = x.SKU, productName = x.Product!.ProductName }).ToListAsync()
+                productVariants = products.Where(x => !string.IsNullOrWhiteSpace(x.sku)).ToList(),
+                // SD03: chỉ chọn Staff đang hoạt động và được phân công vào kho đang xem.
+                warehouseStaff = await _context.UserWarehouses.AsNoTracking()
+                    .Where(x => warehouses.Contains(x.WarehouseId) && x.Warehouse.Status == "Active"
+                        && x.User.Status == "Active" && x.User.Role.RoleName == "Warehouse Staff")
+                    .OrderBy(x => x.User.FullName)
+                    .Select(x => new { x.UserId, fullName = x.User.FullName, x.WarehouseId }).ToListAsync()
             });
         }
 

@@ -1,54 +1,50 @@
 import { useRef, useState, type FormEvent } from "react";
-import { updateSupplierCommitment, type InboundRequestDetailItem } from "./inbound.api";
+import { updateSupplierCommitment, type InboundRequestDetailItem, type InboundLookups } from "./inbound.api";
 import { inboundError } from "./inbound.helpers";
-import { manifestInputErrors, parseSerialLines } from "./supplierManifest.helpers";
 
 interface Props {
-  requestId: number;
-  suppliers: { id: number; supplierName: string }[];
+  requestId: number; revision: string;
+  suppliers: InboundLookups["suppliers"];
+  products: InboundLookups["productVariants"];
   items: InboundRequestDetailItem[];
   initialSupplierId: number | null; initialStatus: string | null; initialDeliveryDate: string | null;
   onUpdated: () => void;
 }
 
-export default function SupplierCommitmentForm({ requestId, suppliers, items, initialSupplierId, initialStatus, initialDeliveryDate, onUpdated }: Props) {
+export default function SupplierCommitmentForm({ requestId, revision, suppliers, products, items, initialSupplierId, initialStatus, initialDeliveryDate, onUpdated }: Props) {
   const [supplierId, setSupplierId] = useState(initialSupplierId?.toString() || "");
-  const [status, setStatus] = useState<"Confirmed" | "Rejected">(initialStatus === "Rejected" ? "Rejected" : "Confirmed");
+  const [status, setStatus] = useState<"Accepted" | "Rejected">(initialStatus === "Rejected" ? "Rejected" : "Accepted");
   const [deliveryDate, setDeliveryDate] = useState(initialDeliveryDate?.slice(0, 10) || "");
+  // SD04: Purchasing cập nhật sản phẩm và số lượng mà nhà cung cấp xác nhận.
+  const [confirmedItems, setConfirmedItems] = useState(() => items.map(item => ({ itemId: item.id, productVariantId: item.productVariantId, expectedQty: item.expectedQty })));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [showValidation, setShowValidation] = useState(false);
-  const [serialTexts, setSerialTexts] = useState<Record<number, string>>(() => {
-    const values: Record<number, string> = {};
-    for (const item of items) values[item.id] = (item.expectedSerials || []).join("\n");
-    return values;
-  });
   const submitting = useRef(false);
   const today = new Date();
   const minDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-  const itemErrors = manifestInputErrors(items, serialTexts);
-  const totalSerials = items.reduce((total, item) => total + parseSerialLines(serialTexts[item.id] || "").length, 0);
-  const totalExpected = items.reduce((total, item) => total + item.expectedQty, 0);
+
+  function updateItem(itemId: number, field: "productVariantId" | "expectedQty", value: number) {
+    setConfirmedItems(current => current.map(item => item.itemId === itemId ? { ...item, [field]: value } : item));
+  }
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting.current) return;
     setError("");
     if (!suppliers.some(x => x.id === Number(supplierId))) { setError("Chọn nhà cung cấp đang hoạt động trong danh sách."); return; }
-    if (status === "Confirmed" && (!deliveryDate || deliveryDate < minDate)) { setError("Chọn ngày giao dự kiến từ hôm nay trở đi."); return; }
-    if (status === "Confirmed") {
-      setShowValidation(true);
-      if (items.length === 0 || Object.values(itemErrors).some(errors => errors.length > 0)) {
-        setError("Kiểm tra bảng kê bên dưới: mỗi SKU cần đủ serial hợp lệ và không trùng nhau."); return;
+    if (status === "Accepted") {
+      if (!deliveryDate || deliveryDate < minDate) { setError("Chọn ngày giao dự kiến từ hôm nay trở đi."); return; }
+      if (!confirmedItems.length || confirmedItems.some(item => !products.some(product => product.id === item.productVariantId) || !Number.isInteger(item.expectedQty) || item.expectedQty < 1 || item.expectedQty > 2147483647)) {
+        setError("Chọn SKU đang hoạt động và số lượng nguyên lớn hơn 0 cho từng dòng."); return;
       }
+      if (new Set(confirmedItems.map(item => item.productVariantId)).size !== confirmedItems.length) { setError("Mỗi SKU chỉ được xuất hiện một lần trong yêu cầu."); return; }
     }
     submitting.current = true; setSaving(true);
     try {
       await updateSupplierCommitment(requestId, {
         supplierId: Number(supplierId), commitmentStatus: status,
-        expectedDeliveryDate: status === "Confirmed" ? `${deliveryDate}T00:00:00` : null,
-        // Rejected không gửi bảng kê cũ; server sẽ xóa khai báo của yêu cầu Pending.
-        items: status === "Confirmed" ? items.map(item => ({ itemId: item.id, sku: item.sku, serialCodes: parseSerialLines(serialTexts[item.id] || "") })) : [],
+        expectedDeliveryDate: status === "Accepted" ? `${deliveryDate}T00:00:00` : null,
+        items: status === "Accepted" ? confirmedItems : [], expectedRevision: revision,
       });
       onUpdated();
     } catch (err) { setError(inboundError(err)); }
@@ -56,29 +52,20 @@ export default function SupplierCommitmentForm({ requestId, suppliers, items, in
   }
 
   return <section className="gr-panel ib-section">
-    <div className="ib-section-heading"><div><p className="gr-eyebrow">BỘ PHẬN MUA HÀNG</p><h2>Cam kết & bảng kê hàng giao</h2><p className="ib-muted">Nhập thông tin nhà cung cấp xác nhận để nhân viên kho đối chiếu từng thiết bị khi nhận.</p></div></div>
+    <div className="ib-section-heading"><div><p className="gr-eyebrow">BỘ PHẬN MUA HÀNG</p><h2>Cam kết cung cấp</h2><p className="ib-muted">Cập nhật phản hồi, ngày giao và các mặt hàng được nhà cung cấp xác nhận.</p></div></div>
     <form onSubmit={event => void save(event)}><fieldset disabled={saving} className="ib-fieldset">
       <div className="ib-form-grid">
         <label className="ib-field">Nhà cung cấp<select required value={supplierId} onChange={event => setSupplierId(event.target.value)}><option value="">Chọn nhà cung cấp…</option>{suppliers.map(supplier => <option key={supplier.id} value={supplier.id}>{supplier.supplierName}</option>)}</select></label>
-        <label className="ib-field">Phản hồi<select value={status} onChange={event => setStatus(event.target.value as "Confirmed" | "Rejected")}><option value="Confirmed">Xác nhận cung cấp</option><option value="Rejected">Từ chối cung cấp</option></select></label>
-        {status === "Confirmed" && <label className="ib-field">Ngày giao dự kiến<input required type="date" min={minDate} value={deliveryDate} onChange={event => setDeliveryDate(event.target.value)} /></label>}
+        <label className="ib-field">Phản hồi<select value={status} onChange={event => setStatus(event.target.value as "Accepted" | "Rejected")}><option value="Accepted">Chấp nhận cung cấp</option><option value="Rejected">Từ chối cung cấp</option></select></label>
+        {status === "Accepted" && <label className="ib-field">Ngày giao dự kiến<input required type="date" min={minDate} value={deliveryDate} onChange={event => setDeliveryDate(event.target.value)} /></label>}
       </div>
-      {status === "Confirmed" ? <div className="ib-manifest-editor">
-        <div className="ib-section-heading"><div><h3>SKU và Serial / IMEI dự kiến</h3><p className="ib-muted">SKU và số lượng lấy từ kế hoạch đã lập. Nhập hoặc dán mỗi serial trên một dòng; cần đủ mã cho tất cả sản phẩm.</p></div><span className={`ib-manifest-count${totalSerials === totalExpected ? " complete" : ""}`}>{totalSerials} / {totalExpected} mã</span></div>
-        <div className="gr-alert gr-alert--info">Đây là bảng kê do nhà cung cấp xác nhận, chưa phải hàng đã nhận. Staff vẫn phải quét thiết bị thực tế; tồn kho chỉ tăng sau khi Manager duyệt phiếu nhận.</div>
-        {items.map(item => {
-          const count = parseSerialLines(serialTexts[item.id] || "").length;
-          const errors = itemErrors[item.id];
-          const showErrors = showValidation || Boolean(serialTexts[item.id]?.trim());
-          const errorId = `ib-serial-errors-${item.id}`;
-          return <div className="ib-manifest-item" key={item.id}>
-            <div className="ib-manifest-product"><div><label className="ib-field">SKU đã đặt<input readOnly value={item.sku} aria-label={`SKU dòng ${item.id}`} /></label><h4>{item.productName}</h4></div><div><span>Số lượng dự kiến</span><strong>{item.expectedQty} thiết bị</strong></div></div>
-            <label className="ib-field ib-serial-input">Serial / IMEI cho {item.sku}<textarea rows={Math.min(8, Math.max(3, item.expectedQty))} required aria-describedby={errorId} aria-invalid={showErrors && errors.length > 0} value={serialTexts[item.id] || ""} autoComplete="off" autoCapitalize="off" spellCheck={false} placeholder="Mỗi serial một dòng, giữ nguyên số 0 ở đầu…" onChange={event => setSerialTexts(current => ({ ...current, [item.id]: event.target.value }))} /></label>
-            <div className="ib-manifest-line-summary"><span className={count === item.expectedQty ? "ib-text-success" : "ib-text-warning"}>{count} / {item.expectedQty} serial{count < item.expectedQty ? ` · Còn thiếu ${item.expectedQty - count}` : count > item.expectedQty ? ` · Thừa ${count - item.expectedQty}` : " · Đã đủ số lượng"}</span><small>Dòng trống được bỏ qua. Không tự đổi chữ hoa/thường.</small></div>
-            <div id={errorId}>{showErrors && errors.length > 0 && <ul className="ib-manifest-errors">{errors.map((message, index) => <li key={index}>{message}</li>)}</ul>}</div>
-          </div>;
-        })}
-      </div> : <div className="gr-alert gr-alert--info">Nhà cung cấp từ chối cung cấp: không cần nhập serial. Khi lưu, bảng kê cũ của yêu cầu này sẽ được xóa.</div>}
+      {status === "Accepted" ? <>
+        <h3>Mặt hàng nhà cung cấp xác nhận</h3><p className="ib-muted">Chọn SKU và số lượng xác nhận cho từng dòng của yêu cầu. Nhân viên kho ghi nhận serial khi nhận hàng thực tế.</p>
+        <div className="gr-table-scroll"><table className="gr-table ib-edit-table"><caption className="sr-only">Sản phẩm và số lượng nhà cung cấp xác nhận</caption><thead><tr><th>Sản phẩm / SKU</th><th>Số lượng xác nhận</th></tr></thead><tbody>{confirmedItems.map((item, index) => <tr key={item.itemId}>
+          <td><select required aria-label={`SKU xác nhận dòng ${index + 1}`} value={item.productVariantId} onChange={event => updateItem(item.itemId, "productVariantId", Number(event.target.value))}><option value="">Chọn sản phẩm…</option>{!products.some(product => product.id === item.productVariantId) && <option value={item.productVariantId} disabled>{items[index].sku} · Không còn hoạt động</option>}{products.map(product => <option key={product.id} value={product.id} disabled={confirmedItems.some(other => other.itemId !== item.itemId && other.productVariantId === product.id)}>{product.sku} · {product.productName}</option>)}</select></td>
+          <td><input required aria-label={`Số lượng xác nhận dòng ${index + 1}`} type="number" min={1} max={2147483647} step={1} value={item.expectedQty || ""} onChange={event => updateItem(item.itemId, "expectedQty", Number(event.target.value))} /></td>
+        </tr>)}</tbody></table></div>
+      </> : <div className="gr-alert gr-alert--info">Khi lưu phản hồi từ chối, yêu cầu sẽ chuyển sang Đã hủy và không thể dùng để nhận hàng.</div>}
       {error && <div className="gr-alert gr-alert--error" role="alert">{error}</div>}
       {!suppliers.length && <p className="ib-muted">Chưa có nhà cung cấp đang hoạt động. Liên hệ bộ phận quản lý danh mục.</p>}
       <div className="ib-actions"><button className="gr-button gr-button--primary" type="submit" disabled={!suppliers.length}>{saving ? "Đang lưu…" : "Lưu cam kết"}</button></div>

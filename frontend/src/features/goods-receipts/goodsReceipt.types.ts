@@ -27,14 +27,6 @@ export interface ReceiptItem {
   approvedReceivedQty: number;
   remainingQty: number;
   serials: ReceiptSerial[];
-  expectedSerials: ExpectedReceiptSerial[];
-}
-
-export interface ExpectedReceiptSerial {
-  serialCode: string;
-  status: "AwaitingReceipt" | "ScannedThisReceipt" | "ScannedOtherReceipt" | "Received";
-  receiptId: number | null;
-  scannedSerialCode: string | null;
 }
 
 export interface GoodsReceipt {
@@ -46,9 +38,10 @@ export interface GoodsReceipt {
   status: ReceiptStatus;
   version: string;
   decidedByUserId: number | null;
+  decidedByName: string | null;
   decisionDate: string | null;
   rejectionReason: string | null;
-  hasSupplierManifest: boolean;
+  approvalNote: string | null;
   items: ReceiptItem[];
 }
 

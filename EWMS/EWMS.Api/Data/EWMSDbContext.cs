@@ -415,7 +415,11 @@ namespace EWMS.Api.Data
                 e.Property(x => x.ExpectedDeliveryDate)
                     .HasColumnType("datetime2");
                 e.Property(x => x.RejectionReason)
-                    .HasColumnType("varchar(255)");
+                    .HasColumnType("nvarchar(255)");
+                e.Property(x => x.ApprovalNote)
+                    .HasColumnType("nvarchar(255)");
+                e.Property(x => x.DecisionDate)
+                    .HasColumnType("datetime2");
                 e.Property(x => x.Status)
                     .HasColumnType("varchar(30)").IsRequired();
                 e.Property(x => x.CreatedDate)
@@ -431,6 +435,10 @@ namespace EWMS.Api.Data
 
                 e.HasOne(x => x.RequestedByUser).WithMany()
                     .HasForeignKey(x => x.RequestedByUserId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.AssignedStaffUser).WithMany()
+                    .HasForeignKey(x => x.AssignedStaffUserId)
                     .OnDelete(DeleteBehavior.NoAction);
 
                 e.HasOne(x => x.ApprovedByUser).WithMany()
@@ -480,6 +488,8 @@ namespace EWMS.Api.Data
                 e.Property(x => x.ApprovalDate)
                     .HasColumnType("datetime2");
                 e.Property(x => x.RejectionReason)
+                    .HasColumnType("nvarchar(255)");
+                e.Property(x => x.ApprovalNote)
                     .HasColumnType("nvarchar(255)");
                 e.Property(x => x.Version).IsRowVersion();
                 e.Property(x => x.UpdatedAt).HasColumnType("datetime2");

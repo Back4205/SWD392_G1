@@ -25,22 +25,11 @@ builder.Services.AddScoped<IInboundService, InboundReceivingService>();
 // Cộng tồn bằng SQL thật, dùng chung DbContext và transaction duyệt phiếu.
 builder.Services.AddScoped<IStockService, StockReceivingService>();
 builder.Services.AddEwmsAuthentication(builder.Configuration, builder.Environment);
-bool developmentSeed = builder.Configuration.GetValue<bool>("GoodsReceipts:SeedDevelopmentData");
-if (!builder.Environment.IsDevelopment() && developmentSeed)
-    throw new InvalidOperationException("Development seeding is forbidden outside Development.");
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-
-// Tùy chọn tạo dataset demo; mặc định tắt và chỉ dùng database development riêng.
-if (developmentSeed)
-{
-    using var scope = app.Services.CreateScope();
-    var context = scope.ServiceProvider.GetRequiredService<EWMSDbContext>();
-    await GoodsReceiptDemoSeeder.SeedAsync(context, app.Environment, app.Logger);
-}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

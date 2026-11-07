@@ -22,6 +22,15 @@ namespace EWMS.Api.Services
             _context = context;
         }
 
+        public Task<List<int>> GetAssignedWarehouseIdsAsync(int userId) =>
+            _repository.GetAssignedWarehouseIdsAsync(userId);
+
+        public Task<bool> CanUseWarehouseAsync(int userId, int warehouseId) =>
+            _repository.IsAssignedToWarehouseAsync(userId, warehouseId);
+
+        public Task<InboundLookupDto> GetLookupsAsync(int userId) =>
+            _repository.GetLookupsAsync(userId);
+
         // UC11 / SD03: Manager chọn kho, nhân viên kho, SKU và số lượng rồi lưu Pending.
         public async Task<int> CreateAsync(CreateInboundRequestDto dto, int requestedByUserId)
         {
@@ -39,20 +48,18 @@ namespace EWMS.Api.Services
                 if (item == null || !variantIds.Add(item.ProductVariantId))
                     throw new ArgumentException("Every product variant must appear exactly once.");
                 await ValidateItemAsync(item.ProductVariantId, item.ExpectedQty);
-                items.Add(new InboundRequestItem
-                {
-                    ProductVariantId = item.ProductVariantId,
-                    ExpectedQty = item.ExpectedQty
-                });
+                var requestItem = new InboundRequestItem();
+                requestItem.UpdateConfirmedDetails(item.ProductVariantId, item.ExpectedQty);
+                items.Add(requestItem);
             }
             var request = new InboundRequest
             {
                 WarehouseId = dto.WarehouseId,
                 RequestedByUserId = requestedByUserId,
                 AssignedStaffUserId = dto.AssignedStaffUserId,
-                Status = "Pending",
                 CreatedDate = DateTime.UtcNow
             };
+            request.UpdateStatus("Pending");
             // Repository hiện có lưu header và các dòng trong cùng transaction.
             var created = await _repository.CreateAsync(request, items);
             return created.Id;
@@ -78,7 +85,7 @@ namespace EWMS.Api.Services
         // Map thủ công để thấy rõ dữ liệu dùng cho màn hình và kiểm tra phiên bản nội dung.
         public async Task<InboundRequestDetailDto?> GetByIdAsync(int id)
         {
-            var request = await _context.InboundRequests.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id);
+            var request = await _repository.GetByIdAsync(id);
             if (request == null) return null;
             var items = await LoadItemsAsync(id, false);
             var result = new InboundRequestDetailDto
@@ -87,15 +94,15 @@ namespace EWMS.Api.Services
                 RequestedByUserId = request.RequestedByUserId,
                 AssignedStaffUserId = request.AssignedStaffUserId,
                 AssignedStaffName = request.AssignedStaffUserId.HasValue
-                    ? await _context.Users.Where(x => x.Id == request.AssignedStaffUserId).Select(x => x.FullName).SingleOrDefaultAsync()
+                    ? await _repository.GetUserNameAsync(request.AssignedStaffUserId.Value)
                     : null,
                 ApprovedByUserId = request.ApprovedByUserId,
                 DecidedByName = request.ApprovedByUserId.HasValue
-                    ? await _context.Users.Where(x => x.Id == request.ApprovedByUserId).Select(x => x.FullName).SingleOrDefaultAsync()
+                    ? await _repository.GetUserNameAsync(request.ApprovedByUserId.Value)
                     : null,
                 DecisionDate = request.DecisionDate,
                 SupplierCommitmentStatus = request.SupplierCommitmentStatus,
-                HasGoodsReceipts = await _context.GoodsReceipts.AnyAsync(x => x.InboundRequestId == id),
+                HasGoodsReceipts = await _repository.HasGoodsReceiptsAsync(id),
                 ExpectedDeliveryDate = request.ExpectedDeliveryDate,
                 RejectionReason = request.RejectionReason,
                 ApprovalNote = request.ApprovalNote,
@@ -122,13 +129,13 @@ namespace EWMS.Api.Services
             {
                 // Cùng khóa với Receipt: không cho hai thao tác thay đổi trạng thái xen kẽ nhau.
                 await _context.LockGoodsReceiptAsync();
-                var request = await _context.InboundRequests.SingleOrDefaultAsync(x => x.Id == requestId);
+                var request = await _repository.GetForUpdateAsync(requestId);
                 if (request == null) throw new KeyNotFoundException("Inbound request was not found.");
                 var items = await LoadItemsAsync(requestId, true);
                 ValidateRevision(request, items, dto.ExpectedRevision);
                 if (request.Status != "Pending")
                     throw new InvalidOperationException("Only pending inbound requests can be updated.");
-                if (!dto.SupplierId.HasValue || !await _context.Suppliers.AnyAsync(x => x.Id == dto.SupplierId && x.Status == "Active"))
+                if (!dto.SupplierId.HasValue || !await _repository.IsActiveSupplierAsync(dto.SupplierId.Value))
                     throw new GoodsReceiptException(400, "IN_SUPPLIER_INACTIVE", "Select an active supplier.");
                 string status = dto.CommitmentStatus?.Trim() ?? "";
                 // Confirmed chỉ là alias tương thích client/dữ liệu cũ; giá trị mới luôn là Accepted.
@@ -154,19 +161,13 @@ namespace EWMS.Api.Services
                             throw new ArgumentException("Every product variant must appear exactly once.");
                         await ValidateItemAsync(confirmed.ProductVariantId, confirmed.ExpectedQty);
                     }
-                    foreach (var confirmed in dto.Items)
-                    {
-                        var item = items.Single(x => x.Id == confirmed.ItemId);
-                        item.ProductVariantId = confirmed.ProductVariantId;
-                        item.ExpectedQty = confirmed.ExpectedQty;
-                    }
                 }
-                request.SupplierId = dto.SupplierId;
-                request.SupplierCommitmentStatus = status;
-                request.ExpectedDeliveryDate = status == "Accepted" ? dto.ExpectedDeliveryDate : null;
-                if (status == "Rejected") request.Status = "Canceled";
+                var confirmedItems = status == "Accepted"
+                    ? dto.Items!.Select(x => (items.Single(item => item.Id == x.ItemId), x.ProductVariantId, x.ExpectedQty)).ToList()
+                    : new List<(InboundRequestItem, int, int)>();
                 // Không tạo/xóa bảng serial dự kiến: tài liệu chỉ yêu cầu serial thực nhận ở UC50.
-                await _context.SaveChangesAsync();
+                await _repository.SaveCommitmentAsync(request, dto.SupplierId.Value, status,
+                    dto.ExpectedDeliveryDate, confirmedItems);
                 await transaction.CommitAsync();
             }
             catch
@@ -184,7 +185,7 @@ namespace EWMS.Api.Services
             try
             {
                 await _context.LockGoodsReceiptAsync();
-                var request = await _context.InboundRequests.SingleOrDefaultAsync(x => x.Id == requestId);
+                var request = await _repository.GetForUpdateAsync(requestId);
                 if (request == null) throw new KeyNotFoundException("Inbound request was not found.");
                 var items = await LoadItemsAsync(requestId, true);
                 ValidateRevision(request, items, dto.ExpectedRevision);
@@ -201,7 +202,7 @@ namespace EWMS.Api.Services
                 {
                     if (request.SupplierCommitmentStatus != "Accepted" && request.SupplierCommitmentStatus != "Confirmed")
                         throw new GoodsReceiptException(409, "IN_SUPPLIER_NOT_ACCEPTED", "Supplier acceptance is required before approval.");
-                    if (!request.SupplierId.HasValue || !await _context.Suppliers.AnyAsync(x => x.Id == request.SupplierId && x.Status == "Active"))
+                    if (!request.SupplierId.HasValue || !await _repository.IsActiveSupplierAsync(request.SupplierId.Value))
                         throw new GoodsReceiptException(400, "IN_SUPPLIER_INACTIVE", "The supplier must remain active.");
                     await ValidateWarehouseAsync(request.WarehouseId);
                     if (!request.ExpectedDeliveryDate.HasValue || items.Count == 0)
@@ -216,12 +217,10 @@ namespace EWMS.Api.Services
                     if (request.AssignedStaffUserId.HasValue)
                         await ValidateStaffAsync(request.AssignedStaffUserId.Value, request.WarehouseId);
                 }
-                request.Status = decision;
-                request.ApprovedByUserId = managerUserId;
-                request.DecisionDate = DateTime.UtcNow;
-                request.ApprovalNote = null;
-                request.RejectionReason = decision == "Rejected" ? reason : null;
-                await _context.SaveChangesAsync();
+                if (decision == "Approved")
+                    await _repository.SaveApprovalAsync(request, managerUserId);
+                else
+                    await _repository.SaveRejectionAsync(request, reason, managerUserId);
                 await transaction.CommitAsync();
             }
             catch
@@ -234,15 +233,14 @@ namespace EWMS.Api.Services
 
         private async Task ValidateWarehouseAsync(int warehouseId)
         {
-            if (!await _context.Warehouses.AnyAsync(x => x.Id == warehouseId && x.Status == "Active"))
+            if (!await _repository.IsActiveWarehouseAsync(warehouseId))
                 throw new ArgumentException("Select an active warehouse.");
         }
 
         private async Task ValidateItemAsync(int variantId, int expectedQty)
         {
             if (expectedQty <= 0) throw new ArgumentException("Expected quantity must be greater than zero.");
-            var variant = await _context.ProductVariants.AsNoTracking().Include(x => x.Product)
-                .SingleOrDefaultAsync(x => x.Id == variantId);
+            var variant = await _repository.GetProductVariantAsync(variantId);
             // Kiểm tra bằng C# để cả tab/xuống dòng cũng không được coi là SKU hợp lệ.
             if (variant == null || string.IsNullOrWhiteSpace(variant.SKU) || variant.WeightKg <= 0
                 || variant.Product == null || variant.Product.Status != "Active")
@@ -251,23 +249,19 @@ namespace EWMS.Api.Services
 
         private async Task ValidateStaffAsync(int staffId, int warehouseId)
         {
-            if (!await _context.UserWarehouses.AnyAsync(x => x.UserId == staffId && x.WarehouseId == warehouseId
-                && x.User.Status == "Active" && x.User.Role.RoleName == "Warehouse Staff"))
+            if (!await _repository.IsActiveAssignedUserAsync(staffId, warehouseId, "Warehouse Staff"))
                 throw new ArgumentException("Assigned staff must be active warehouse staff assigned to this warehouse.");
         }
 
         private async Task ValidateManagerAsync(int managerId, int warehouseId)
         {
-            if (!await _context.UserWarehouses.AnyAsync(x => x.UserId == managerId && x.WarehouseId == warehouseId
-                && x.User.Status == "Active" && x.User.Role.RoleName == "Manager"))
+            if (!await _repository.IsActiveAssignedUserAsync(managerId, warehouseId, "Manager"))
                 throw new ArgumentException("Manager must be active and assigned to this warehouse.");
         }
 
         private Task<List<InboundRequestItem>> LoadItemsAsync(int requestId, bool tracking)
         {
-            var query = _context.InboundRequestItems.Where(x => x.InboundRequestId == requestId);
-            if (!tracking) query = query.AsNoTracking();
-            return query.Include(x => x.ProductVariant).ThenInclude(x => x.Product).OrderBy(x => x.Id).ToListAsync();
+            return _repository.LoadItemsAsync(requestId, tracking);
         }
 
         // Revision chỉ là dấu vân tay nội dung để phát hiện màn hình cũ, không phải trạng thái nghiệp vụ.

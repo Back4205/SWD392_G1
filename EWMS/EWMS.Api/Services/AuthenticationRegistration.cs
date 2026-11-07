@@ -1,6 +1,8 @@
 using System.Text;
 using System.Threading.RateLimiting;
 using EWMS.Api.Entities;
+using EWMS.Api.Interfaces;
+using EWMS.Api.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +20,7 @@ public static class AuthenticationRegistration
         var settings = TokenService.ReadSettings(configuration, environment);
         services.AddSingleton(settings);
         services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+        services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<AuthService>();
         services.AddScoped<TokenService>();
         services.AddScoped<JwtSessionEvents>();

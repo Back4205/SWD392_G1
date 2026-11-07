@@ -1,3 +1,4 @@
+using EWMS.Api.Repositories;
 using System.Data;
 using EWMS.Api.Common;
 using EWMS.Api.Data;
@@ -11,14 +12,19 @@ namespace EWMS.Api.Services
     public class GoodsReceiptApprovalService
     {
         private readonly EWMSDbContext _context;
+        private readonly GoodsReceiptRepository _receipts;
+        private readonly SerialNumberRepository _serials;
         private readonly GoodsReceiptService _receiptService;
         private readonly IStockService _stockService;
         private readonly IInboundService _inboundService;
 
         public GoodsReceiptApprovalService(EWMSDbContext context, GoodsReceiptService receiptService,
-            IStockService stockService, IInboundService inboundService)
+            IStockService stockService, IInboundService inboundService,
+            GoodsReceiptRepository? receipts = null, SerialNumberRepository? serials = null)
         {
             _context = context;
+            _receipts = receipts ?? new GoodsReceiptRepository(context);
+            _serials = serials ?? new SerialNumberRepository(context);
             _receiptService = receiptService;
             _stockService = stockService;
             _inboundService = inboundService;
@@ -47,42 +53,23 @@ namespace EWMS.Api.Services
                 {
                     foreach (var scan in item.Serials)
                     {
-                        var serial = new SerialNumber
-                        {
-                            ProductVariantId = item.ProductVariantId,
-                            OriginGoodsReceiptItemId = item.Id,
-                            CurrentBinId = item.BinId,
-                            SerialCode = scan.SerialCode,
-                            CurrentStatus = "IN_STOCK"
-                        };
-                        _context.SerialNumbers.Add(serial);
-                        _context.SerialMovements.Add(new SerialMovement
-                        {
-                            SerialNumber = serial,
-                            FromBinId = null,
-                            ToBinId = item.BinId,
-                            PerformedByUserId = userId,
-                            MovementType = "RECEIPT",
-                            RefType = "GOODS_RECEIPT",
-                            RefId = receipt.Id,
-                            MovementDate = DateTime.UtcNow
-                        });
+                        _serials.RegisterWithMovement(receipt, item, scan.SerialCode, userId);
                     }
                 }
-                await _context.SaveChangesAsync();
+                await _receipts.SaveChangesAsync();
 
                 // 4. Cộng tồn kho qua hợp đồng Người 2.
                 await _stockService.ApplyApprovedReceiptAsync(receipt);
 
                 // 5. Lưu Approved trước để bước tính tiến độ thấy phiếu vừa duyệt.
-                receipt.Status = GoodsReceiptStatus.Approved;
+                receipt.UpdateStatus(GoodsReceiptStatus.Approved);
                 // UC-56 không yêu cầu ghi chú duyệt; giữ cột cũ để đọc lịch sử.
                 receipt.ApprovalNote = null;
                 receipt.RejectionReason = null;
                 receipt.ApprovedByUserId = userId;
                 receipt.ApprovalDate = DateTime.UtcNow;
                 _receiptService.MarkChanged(receipt);
-                await _context.SaveChangesAsync();
+                await _receipts.SaveChangesAsync();
 
                 // 6. Nhận một phần -> PartiallyReceived; đủ mọi SKU -> Completed.
                 await _inboundService.RefreshReceivingProgressAsync(receipt.InboundRequestId);
@@ -117,13 +104,13 @@ namespace EWMS.Api.Services
                 {
                     throw new GoodsReceiptException(400, "GR_REJECTION_REASON", "A rejection reason of 1-255 characters is required.");
                 }
-                receipt.Status = GoodsReceiptStatus.Rejected;
+                receipt.UpdateStatus(GoodsReceiptStatus.Rejected);
                 receipt.ApprovalNote = null;
                 receipt.RejectionReason = reason;
                 receipt.ApprovedByUserId = userId;
                 receipt.ApprovalDate = DateTime.UtcNow;
                 _receiptService.MarkChanged(receipt);
-                await _context.SaveChangesAsync();
+                await _receipts.SaveChangesAsync();
                 // Reject chỉ lưu quyết định; không gọi Stock hay tạo serial chính thức.
                 var response = await _receiptService.MapToDtoAsync(receipt);
                 await transaction.CommitAsync();

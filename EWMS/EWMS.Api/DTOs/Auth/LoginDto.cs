@@ -17,7 +17,7 @@ namespace EWMS.Api.DTOs.Auth
     {
         [Required, StringLength(256)]
         public string CurrentPassword { get; set; } = string.Empty;
-        [Required, StringLength(128, MinimumLength = 12)]
+        [Required, StringLength(128, MinimumLength = 6)]
         public string NewPassword { get; set; } = string.Empty;
         [Required, Compare(nameof(NewPassword))]
         public string ConfirmPassword { get; set; } = string.Empty;

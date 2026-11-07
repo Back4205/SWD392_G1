@@ -1,3 +1,4 @@
+using EWMS.Api.Repositories;
 using System.Data;
 using EWMS.Api.Common;
 using EWMS.Api.Data;
@@ -11,14 +12,37 @@ namespace EWMS.Api.Services
     public class GoodsReceiptService : IGoodsReceiptService
     {
         private readonly EWMSDbContext _context;
+        private readonly GoodsReceiptRepository _receipts;
+        private readonly GoodsReceiptScanRepository _scans;
+        private readonly SerialNumberRepository _serials;
+        private readonly IInboundRequestRepository _inbounds;
+        private readonly GenericRepository<User> _users;
+        private readonly GenericRepository<UserWarehouse> _assignments;
+        private readonly GenericRepository<Warehouse> _warehouses;
+        private readonly GenericRepository<StorageBin> _bins;
+        private readonly StockRepository _stocks;
         private readonly IStockService _stockService;
         private readonly IInboundService _inboundService;
         private readonly IConfiguration _configuration;
 
         public GoodsReceiptService(EWMSDbContext context, IStockService stockService,
-            IInboundService inboundService, IConfiguration configuration)
+            IInboundService inboundService, IConfiguration configuration,
+            GoodsReceiptRepository? receipts = null, GoodsReceiptScanRepository? scans = null,
+            SerialNumberRepository? serials = null, IInboundRequestRepository? inbounds = null,
+            GenericRepository<User>? users = null, GenericRepository<UserWarehouse>? assignments = null,
+            GenericRepository<Warehouse>? warehouses = null, GenericRepository<StorageBin>? bins = null,
+            StockRepository? stocks = null)
         {
             _context = context;
+            _receipts = receipts ?? new GoodsReceiptRepository(context);
+            _scans = scans ?? new GoodsReceiptScanRepository(context);
+            _serials = serials ?? new SerialNumberRepository(context);
+            _inbounds = inbounds ?? new InboundRequestRepository(context);
+            _users = users ?? new GenericRepository<User>(context);
+            _assignments = assignments ?? new GenericRepository<UserWarehouse>(context);
+            _warehouses = warehouses ?? new GenericRepository<Warehouse>(context);
+            _bins = bins ?? new GenericRepository<StorageBin>(context);
+            _stocks = stocks ?? new StockRepository(context);
             _stockService = stockService;
             _inboundService = inboundService;
             _configuration = configuration;
@@ -28,9 +52,9 @@ namespace EWMS.Api.Services
         public async Task<GoodsReceiptSessionDto> GetSessionAsync(int userId)
         {
             await ValidateUserAsync(userId, null);
-            var user = await _context.Users.AsNoTracking().Include(x => x.Role)
+            var user = await _users.Query.AsNoTracking().Include(x => x.Role)
                 .SingleAsync(x => x.Id == userId);
-            var warehouseIds = await _context.UserWarehouses.Where(x => x.UserId == userId)
+            var warehouseIds = await _assignments.Query.Where(x => x.UserId == userId)
                 .Select(x => x.WarehouseId).OrderBy(x => x).ToListAsync();
             return new GoodsReceiptSessionDto
             {
@@ -45,9 +69,9 @@ namespace EWMS.Api.Services
         public async Task<List<ReceivableInboundDto>> GetReceivableInboundsAsync(int userId)
         {
             await ValidateUserAsync(userId, "Warehouse Staff");
-            var warehouseIds = await _context.UserWarehouses.Where(x => x.UserId == userId)
+            var warehouseIds = await _assignments.Query.Where(x => x.UserId == userId)
                 .Select(x => x.WarehouseId).ToListAsync();
-            var inbounds = await _context.InboundRequests.AsNoTracking().Include(x => x.Warehouse)
+            var inbounds = await _inbounds.Query.AsNoTracking().Include(x => x.Warehouse)
                 .Where(x => warehouseIds.Contains(x.WarehouseId)
                     && (x.Status == "Approved" || x.Status == "PartiallyReceived"))
                 .OrderByDescending(x => x.CreatedDate).ThenByDescending(x => x.Id).ToListAsync();
@@ -81,15 +105,15 @@ namespace EWMS.Api.Services
         {
             await ValidateUserAsync(userId, null);
             await ValidateWarehouseAsync(userId, warehouseId);
-            var warehouse = await _context.Warehouses.AsNoTracking().SingleAsync(x => x.Id == warehouseId);
+            var warehouse = await _warehouses.Query.AsNoTracking().SingleAsync(x => x.Id == warehouseId);
             if (!string.Equals(warehouse.Status, "Active", StringComparison.OrdinalIgnoreCase))
             {
                 throw new GoodsReceiptException(409, "GR_WAREHOUSE_INACTIVE", "Warehouse is inactive.");
             }
-            var bins = await _context.StorageBins.AsNoTracking().Include(x => x.Rack)
+            var bins = await _bins.Query.AsNoTracking().Include(x => x.Rack)
                 .Where(x => x.Rack.Section.WarehouseId == warehouseId)
                 .OrderBy(x => x.BinCode).ThenBy(x => x.Id).ToListAsync();
-            var stockWeights = await _context.Stocks.AsNoTracking()
+            var stockWeights = await _stocks.Query.AsNoTracking()
                 .Where(x => x.Bin.Rack.Section.WarehouseId == warehouseId)
                 .Select(x => new { x.BinId, WeightKg = x.OnHandQty * x.ProductVariant.WeightKg })
                 .ToListAsync();
@@ -124,9 +148,9 @@ namespace EWMS.Api.Services
             {
                 throw new GoodsReceiptException(400, "GR_FILTER", "Unknown receipt status.");
             }
-            var warehouseIds = await _context.UserWarehouses.Where(x => x.UserId == userId)
+            var warehouseIds = await _assignments.Query.Where(x => x.UserId == userId)
                 .Select(x => x.WarehouseId).ToListAsync();
-            var query = _context.GoodsReceipts.AsNoTracking()
+            var query = _receipts.Query.AsNoTracking()
                 .Where(x => warehouseIds.Contains(x.InboundRequest.WarehouseId));
             if (filter.WarehouseId.HasValue)
             {
@@ -192,7 +216,7 @@ namespace EWMS.Api.Services
             {
                 await _context.LockGoodsReceiptAsync();
                 await ValidateUserAsync(userId, "Warehouse Staff");
-                var inbound = await _context.InboundRequests.Include(x => x.Warehouse)
+                var inbound = await _inbounds.Query.Include(x => x.Warehouse)
                     .SingleOrDefaultAsync(x => x.Id == dto.InboundRequestId);
                 // MSG91: không có Inbound hoặc Inbound chưa được duyệt thì dừng.
                 if (inbound == null)
@@ -224,8 +248,8 @@ namespace EWMS.Api.Services
                         BinId = null // Swimlane: quét trước, chọn bin sau.
                     });
                 }
-                _context.GoodsReceipts.Add(receipt);
-                await _context.SaveChangesAsync();
+                _receipts.Add(receipt);
+                await _receipts.SaveChangesAsync();
                 receipt = await LoadReceiptAsync(receipt.Id);
                 var result = await MapToDtoAsync(receipt);
                 await transaction.CommitAsync();
@@ -265,7 +289,7 @@ namespace EWMS.Api.Services
                 }
                 await ValidateReceiptAsync(receipt, false);
                 MarkChanged(receipt);
-                await _context.SaveChangesAsync();
+                await _receipts.SaveChangesAsync();
                 var result = await MapToDtoAsync(receipt);
                 await transaction.CommitAsync();
                 return result;
@@ -289,9 +313,9 @@ namespace EWMS.Api.Services
                 var receipt = await LoadReceiptAsync(id);
                 await ValidateEditAsync(receipt, userId, dto.ExpectedVersion);
                 await ValidateReceiptAsync(receipt, true);
-                receipt.Status = GoodsReceiptStatus.PendingApproval;
+                receipt.Confirm();
                 MarkChanged(receipt);
-                await _context.SaveChangesAsync();
+                await _receipts.SaveChangesAsync();
                 var result = await MapToDtoAsync(receipt);
                 await transaction.CommitAsync();
                 return result; // Manager thấy ngay trong list PendingApproval; chưa nhập tồn.
@@ -307,11 +331,7 @@ namespace EWMS.Api.Services
         // Các hàm bên dưới dùng chung cho Create/Scan/Submit/Approve để không lặp quy tắc.
         public async Task<GoodsReceipt> LoadReceiptAsync(int id)
         {
-            var receipt = await _context.GoodsReceipts
-                .Include(x => x.InboundRequest).ThenInclude(x => x.Warehouse)
-                .Include(x => x.Items).ThenInclude(x => x.ProductVariant).ThenInclude(x => x.Product)
-                .Include(x => x.Items).ThenInclude(x => x.Serials)
-                .SingleOrDefaultAsync(x => x.Id == id);
+            var receipt = await _receipts.GetByIdAsync(id);
             if (receipt == null)
             {
                 throw new GoodsReceiptException(404, "GR_NOT_FOUND", "Goods receipt was not found.");
@@ -321,7 +341,7 @@ namespace EWMS.Api.Services
 
         public async Task ValidateUserAsync(int userId, string? requiredRole)
         {
-            var user = await _context.Users.AsNoTracking().Include(x => x.Role)
+            var user = await _users.Query.AsNoTracking().Include(x => x.Role)
                 .SingleOrDefaultAsync(x => x.Id == userId);
             if (user == null || !string.Equals(user.Status, "Active", StringComparison.OrdinalIgnoreCase))
             {
@@ -344,7 +364,7 @@ namespace EWMS.Api.Services
 
         public async Task ValidateWarehouseAsync(int userId, int warehouseId)
         {
-            bool assigned = await _context.UserWarehouses.AnyAsync(x => x.UserId == userId && x.WarehouseId == warehouseId);
+            bool assigned = await _assignments.Query.AnyAsync(x => x.UserId == userId && x.WarehouseId == warehouseId);
             if (!assigned)
             {
                 throw new GoodsReceiptException(403, "MSG56", "You do not have access to this warehouse.");
@@ -455,8 +475,8 @@ namespace EWMS.Api.Services
             {
                 throw new GoodsReceiptException(400, "MSG93", "Scan at least one device before submitting.");
             }
-            bool duplicate = await _context.GoodsReceiptSerials.Where(x => x.GoodsReceiptId == receipt.Id)
-                .AnyAsync(x => _context.SerialNumbers.Any(s => s.SerialCode == x.SerialCode));
+            bool duplicate = await _scans.Query.Where(x => x.GoodsReceiptId == receipt.Id)
+                .AnyAsync(x => _serials.Query.Any(s => s.SerialCode == x.SerialCode));
             if (duplicate)
             {
                 throw new GoodsReceiptException(409, "MSG158", "A serial is already registered in inventory.");
@@ -466,9 +486,7 @@ namespace EWMS.Api.Services
 
         public void MarkChanged(GoodsReceipt receipt)
         {
-            receipt.UpdatedAt = DateTime.UtcNow;
-            // Kể cả khi chỉ thêm scan, phải UPDATE header để SQL tạo Version mới.
-            _context.Entry(receipt).Property(x => x.UpdatedAt).IsModified = true;
+            _receipts.MarkChanged(receipt);
         }
 
         public async Task<GoodsReceiptDetailDto> MapToDtoAsync(GoodsReceipt receipt)
@@ -485,7 +503,7 @@ namespace EWMS.Api.Services
                 Version = Convert.ToBase64String(receipt.Version),
                 DecidedByUserId = receipt.ApprovedByUserId,
                 DecidedByName = receipt.ApprovedByUserId.HasValue
-                    ? await _context.Users.Where(x => x.Id == receipt.ApprovedByUserId.Value).Select(x => x.FullName).SingleOrDefaultAsync()
+                    ? await _users.Query.Where(x => x.Id == receipt.ApprovedByUserId.Value).Select(x => x.FullName).SingleOrDefaultAsync()
                     : null,
                 DecisionDate = receipt.ApprovalDate,
                 RejectionReason = receipt.RejectionReason,

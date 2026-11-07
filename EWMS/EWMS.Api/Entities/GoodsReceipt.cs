@@ -3,6 +3,16 @@ namespace EWMS.Api.Entities
 {
     public class GoodsReceipt
     {
+        public void UpdateStatus(string status)
+        {
+            bool allowed = (Status == "Draft" && status == "PendingApproval")
+                || (Status == "PendingApproval" && (status == "Approved" || status == "Rejected"));
+            if (!allowed) throw new InvalidOperationException($"Cannot change receipt from {Status} to {status}.");
+            Status = status;
+        }
+
+        public void Confirm() => UpdateStatus("PendingApproval");
+
         public int Id { get; set; }
 
         public int InboundRequestId { get; set; }

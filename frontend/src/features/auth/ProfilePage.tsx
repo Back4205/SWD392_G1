@@ -22,8 +22,8 @@ export default function ProfilePage({ user, onPasswordChanged }: Props) {
       {error && <div className="gr-alert gr-alert--error" role="alert">{error}</div>}
       <form className="auth-form" onSubmit={event => void submit(event)}>
         <label>Mật khẩu hiện tại<input type="password" autoComplete="current-password" required maxLength={128} value={current} onChange={e => setCurrent(e.target.value)} disabled={busy} /></label>
-        <label>Mật khẩu mới<input type="password" autoComplete="new-password" required minLength={12} maxLength={128} value={password} onChange={e => setPassword(e.target.value)} disabled={busy} /><small>Từ 12 đến 128 ký tự, khác mật khẩu hiện tại.</small></label>
-        <label>Nhập lại mật khẩu mới<input type="password" autoComplete="new-password" required minLength={12} maxLength={128} value={confirm} onChange={e => setConfirm(e.target.value)} disabled={busy} /></label>
+        <label>Mật khẩu mới<input type="password" autoComplete="new-password" required minLength={6} maxLength={128} value={password} onChange={e => setPassword(e.target.value)} disabled={busy} /><small>Từ 6 đến 128 ký tự, khác mật khẩu hiện tại.</small></label>
+        <label>Nhập lại mật khẩu mới<input type="password" autoComplete="new-password" required minLength={6} maxLength={128} value={confirm} onChange={e => setConfirm(e.target.value)} disabled={busy} /></label>
         <button className="gr-button gr-button--primary" disabled={busy}>{busy ? "Đang lưu…" : "Cập nhật mật khẩu"}</button>
       </form>
     </section></div></>;

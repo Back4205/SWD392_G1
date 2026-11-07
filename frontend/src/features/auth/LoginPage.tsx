@@ -14,7 +14,8 @@ export default function LoginPage({ onLogin, notice }: Props) {
     setBusy(true); setError("");
     try { onLogin(await login(userName.trim(), password)); }
     catch (err) {
-      if (err instanceof ApiError && err.status === 401) setError("Tên đăng nhập hoặc mật khẩu chưa đúng.");
+      if (err instanceof ApiError && err.code === "AUTH_ACCOUNT_DEACTIVATED") setError("Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.");
+      else if (err instanceof ApiError && err.status === 401) setError("Tên đăng nhập hoặc mật khẩu chưa đúng.");
       else if (err instanceof ApiError && err.status === 429) setError("Bạn đã thử đăng nhập nhiều lần. Vui lòng đợi một phút rồi thử lại.");
       else setError(err instanceof Error ? err.message : "Không đăng nhập được. Hãy thử lại.");
     } finally { setBusy(false); }

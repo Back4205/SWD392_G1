@@ -1,3 +1,4 @@
+using EWMS.Api.Repositories;
 using System.Data;
 using EWMS.Api.Common;
 using EWMS.Api.Data;
@@ -10,12 +11,17 @@ namespace EWMS.Api.Services
     public class SerialNumberService
     {
         private readonly EWMSDbContext _context;
+        private readonly GoodsReceiptScanRepository _scans;
+        private readonly SerialNumberRepository _serials;
         private readonly GoodsReceiptService _receiptService;
         private readonly IConfiguration _configuration;
 
-        public SerialNumberService(EWMSDbContext context, GoodsReceiptService receiptService, IConfiguration configuration)
+        public SerialNumberService(EWMSDbContext context, GoodsReceiptService receiptService, IConfiguration configuration,
+            GoodsReceiptScanRepository? scans = null, SerialNumberRepository? serials = null)
         {
             _context = context;
+            _scans = scans ?? new GoodsReceiptScanRepository(context);
+            _serials = serials ?? new SerialNumberRepository(context);
             _receiptService = receiptService;
             _configuration = configuration;
         }
@@ -43,9 +49,8 @@ namespace EWMS.Api.Services
                     throw new GoodsReceiptException(400, "GR_SKU", "Scanned SKU does not match receipt item.");
                 }
                 ValidateFormat(dto.SerialCode);
-                bool scannedBefore = await _context.GoodsReceiptSerials
-                    .AnyAsync(x => x.GoodsReceiptId == id && x.SerialCode == dto.SerialCode);
-                bool alreadyInStock = await _context.SerialNumbers.AnyAsync(x => x.SerialCode == dto.SerialCode);
+                bool scannedBefore = await _scans.ExistsAsync(id, dto.SerialCode);
+                bool alreadyInStock = await _serials.ExistsBySerialCodeAsync(dto.SerialCode);
                 // MSG158: trùng trong phiếu hoặc đã có serial chính thức thì không thêm lại.
                 if (scannedBefore || alreadyInStock)
                 {
@@ -60,11 +65,11 @@ namespace EWMS.Api.Services
                     ScannedByUserId = userId
                 };
                 item.Serials.Add(scan);
-                item.ReceivedQty = item.Serials.Count; // Không cộng số lượng từ payload frontend.
+                item.UpdateQuantity(item.Serials.Count); // Không cộng số lượng từ payload frontend.
                 // Kiểm tra SKU/remaining ngay khi quét. Nháp vẫn được thiếu bin.
                 await _receiptService.ValidateReceiptAsync(receipt, false);
                 _receiptService.MarkChanged(receipt);
-                await _context.SaveChangesAsync();
+                await _scans.SaveChangesAsync();
                 var response = new ReceiptSerialDto
                 {
                     Id = scan.Id,

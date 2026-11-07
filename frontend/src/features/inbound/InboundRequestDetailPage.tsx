@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { AuthUser } from "../auth/auth.types";
 import { navigateTo } from "../../hooks/useAppRoute";
-import { getInboundLookups, getInboundRequestById, type InboundLookups, type InboundRequestDetail } from "./inbound.api";
-import { inboundDate, inboundDecisionDate, inboundError, inboundStatuses } from "./inbound.helpers";
+import useInboundRequestDetail from "../../hooks/useInboundRequestDetail";
+import { inboundDate, inboundDecisionDate, inboundStatuses } from "./inbound.helpers";
 import SupplierCommitmentForm from "./SupplierCommitmentForm";
 import InboundReviewForm from "./InboundReviewForm";
 import InboundReceivingProgress from "./InboundReceivingProgress";
@@ -10,38 +10,20 @@ import InboundReceivingProgress from "./InboundReceivingProgress";
 interface Props { requestId: number; session: AuthUser; onBack: () => void; }
 
 export default function InboundRequestDetailPage({ requestId, session, onBack }: Props) {
-  const [request, setRequest] = useState<InboundRequestDetail | null>(null);
-  const [lookups, setLookups] = useState<InboundLookups | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { request, lookups, loading, error, refresh, reload } = useInboundRequestDetail(requestId);
   const [notice, setNotice] = useState("");
-  const [refresh, setRefresh] = useState(0);
 
-  useEffect(() => {
-    let active = true;
-    async function load() {
-      setLoading(true); setError("");
-      try {
-        const [data, options] = await Promise.all([getInboundRequestById(requestId), getInboundLookups()]);
-        if (active) { setRequest(data); setLookups(options); }
-      } catch (err) { if (active) setError(inboundError(err)); }
-      finally { if (active) setLoading(false); }
-    }
-    void load();
-    return () => { active = false; };
-  }, [requestId, refresh]);
-
-  function updated(message: string) { setNotice(message); setRefresh(value => value + 1); }
+  function updated(message: string) { setNotice(message); reload(); }
   const canReceive = session.role === "Warehouse Staff" && request && ["Approved", "PartiallyReceived"].includes(request.status);
   const canApprove = Boolean(request && ["Accepted", "Confirmed"].includes(request.supplierCommitmentStatus || "") && request.expectedDeliveryDate && request.items.length > 0 && request.items.every(item => item.expectedQty > 0));
 
   return <div className="inbound-workspace">
     <button className="gr-back-link" onClick={onBack}>← Danh sách yêu cầu nhập</button>
     <header className="gr-page-heading"><div><p className="gr-eyebrow">CHI TIẾT YÊU CẦU NHẬP</p><h1>IN-{String(requestId).padStart(4, "0")}</h1><p>Thông tin kế hoạch nhập hàng, nhà cung cấp và số lượng đã nhận chính thức.</p></div>
-      <div className="gr-inline-actions"><button className="gr-button gr-button--secondary" disabled={loading} onClick={() => { setNotice(""); setRefresh(value => value + 1); }}>Làm mới thông tin</button>{canReceive && <button className="gr-button gr-button--primary" onClick={() => navigateTo(`/staff/receipts/new?inboundRequestId=${requestId}`)}>Tạo phiếu nhận hàng</button>}</div>
+      <div className="gr-inline-actions"><button className="gr-button gr-button--secondary" disabled={loading} onClick={() => { setNotice(""); reload(); }}>Làm mới thông tin</button>{canReceive && <button className="gr-button gr-button--primary" onClick={() => navigateTo(`/staff/receipts/new?inboundRequestId=${requestId}`)}>Tạo phiếu nhận hàng</button>}</div>
     </header>
     {notice && <div className="gr-alert gr-alert--success" role="status">{notice}</div>}
-    {error && <div className="gr-alert gr-alert--error" role="alert">{error} <button className="gr-text-button" onClick={() => setRefresh(value => value + 1)}>Thử lại</button></div>}
+    {error && <div className="gr-alert gr-alert--error" role="alert">{error} <button className="gr-text-button" onClick={() => reload()}>Thử lại</button></div>}
     {loading ? <section className="gr-panel gr-empty" role="status">Đang tải thông tin yêu cầu…</section> : !error && request && lookups && <>
       <section className="gr-panel ib-section">
         <div className="ib-section-heading"><h2>Thông tin yêu cầu</h2><span className={`ib-status ib-status--${request.status}`}>{inboundStatuses[request.status] || request.status}</span></div>

@@ -32,7 +32,9 @@ export async function apiRequest<T>(path: string, method = "GET", body?: object)
         AUTH_REQUIRED: "Phiên đăng nhập đã kết thúc. Vui lòng đăng nhập lại.",
         AUTH_FORBIDDEN: "Tài khoản của bạn không có quyền thực hiện thao tác này.",
         AUTH_CURRENT_PASSWORD: "Mật khẩu hiện tại chưa đúng.",
-        AUTH_PASSWORD_POLICY: "Mật khẩu mới phải có 12–128 ký tự, khác mật khẩu cũ và khớp phần xác nhận.",
+        AUTH_PASSWORD_POLICY: "Mật khẩu mới phải có 6–128 ký tự, khác mật khẩu cũ và khớp phần xác nhận.",
+        AUTH_ACCOUNT_DEACTIVATED: "Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.",
+        AUTH_CURRENT_PASSWORD_REQUIRED: "Vui lòng nhập mật khẩu hiện tại.",
       };
       const message = authMessages[data?.code] || data?.message || (errors ? Object.values(errors).flat().join(" ") : data?.title);
       throw new ApiError(response.status, data?.code || "HTTP_ERROR", message || `Yêu cầu thất bại (${response.status}).`);

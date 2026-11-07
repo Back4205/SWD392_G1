@@ -1,3 +1,4 @@
+using EWMS.Api.Repositories;
 ﻿using EWMS.Api.Common;
 using EWMS.Api.Data;
 using EWMS.Api.DTOs.GoodsReceipts;
@@ -10,19 +11,25 @@ namespace EWMS.Api.Services
     // Nối nhận hàng với Inbound đã merge. Không thay đổi contract cũ của Người 4.
     public class InboundReceivingService : IInboundService
     {
-        private readonly EWMSDbContext _context;
+        private readonly IInboundRequestRepository _inbounds;
+        private readonly GenericRepository<InboundRequestItem> _items;
+        private readonly GenericRepository<GoodsReceiptItem> _receivedItems;
 
-        public InboundReceivingService(EWMSDbContext context)
+        public InboundReceivingService(EWMSDbContext context,
+            IInboundRequestRepository? inbounds = null, GenericRepository<InboundRequestItem>? items = null,
+            GenericRepository<GoodsReceiptItem>? receivedItems = null)
         {
-            _context = context;
+            _inbounds = inbounds ?? new InboundRequestRepository(context);
+            _items = items ?? new GenericRepository<InboundRequestItem>(context);
+            _receivedItems = receivedItems ?? new GenericRepository<GoodsReceiptItem>(context);
         }
 
         public async Task<List<ReceivingLineDto>> GetLinesAsync(int inboundId)
         {
-            var expectedItems = await _context.InboundRequestItems.Include(x => x.ProductVariant)
+            var expectedItems = await _items.Query.Include(x => x.ProductVariant)
                 .Where(x => x.InboundRequestId == inboundId).ToListAsync();
             // Chỉ phiếu Approved mới được tính là đã nhận, không tính Draft/Pending/Rejected.
-            var approvedItems = await _context.GoodsReceiptItems
+            var approvedItems = await _receivedItems.Query
                 .Where(x => x.GoodsReceipt.InboundRequestId == inboundId
                     && x.GoodsReceipt.Status == GoodsReceiptStatus.Approved).ToListAsync();
             var result = new List<ReceivingLineDto>();
@@ -66,23 +73,23 @@ namespace EWMS.Api.Services
 
         public async Task RefreshReceivingProgressAsync(int inboundId)
         {
-            var inbound = await _context.InboundRequests.SingleAsync(x => x.Id == inboundId);
+            var inbound = await _inbounds.Query.SingleAsync(x => x.Id == inboundId);
             var lines = await GetLinesAsync(inboundId);
             // Hoàn thành chỉ khi TẤT CẢ SKU đã nhận đủ.
             if (lines.All(x => x.RemainingQty == 0))
             {
-                inbound.Status = "Completed";
+                inbound.UpdateStatus("Completed");
             }
             else if (lines.Any(x => x.ReceivedQty > 0))
             {
-                inbound.Status = "PartiallyReceived";
+                inbound.UpdateStatus("PartiallyReceived");
             }
             else
             {
-                inbound.Status = "Approved";
+                inbound.UpdateStatus("Approved");
             }
             // Cùng DbContext/transaction của Approval; không tự Commit.
-            await _context.SaveChangesAsync();
+            await _inbounds.SaveChangesAsync();
         }
     }
 }

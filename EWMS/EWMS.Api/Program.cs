@@ -12,7 +12,7 @@ builder.Services.AddDbContext<EWMSDbContext>(options =>
 
 builder.Services.AddControllers();
 // Inbound Request module
-builder.Services.AddScoped<IInboundRequestRepository, InboundRequestRepository>();
+builder.Services.AddReceivingRepositories();
 builder.Services.AddScoped<IInboundRequestService, InboundRequestService>();
 // Goods Receipt: AddScoped tạo service cho mỗi HTTP request.
 // DbContext cũng Scoped, nên các service trong request dùng chung transaction.

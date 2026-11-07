@@ -46,7 +46,7 @@ public class ReceivingHttpTests
         builder.Services.AddScoped<GoodsReceiptApprovalService>();
         builder.Services.AddScoped<IStockService, StockReceivingService>();
         builder.Services.AddScoped<IInboundService, InboundReceivingService>();
-        builder.Services.AddScoped<IInboundRequestRepository, InboundRequestRepository>();
+        builder.Services.AddReceivingRepositories();
         builder.Services.AddScoped<IInboundRequestService, InboundRequestService>();
         builder.Services.AddEwmsAuthentication(builder.Configuration, builder.Environment);
         var app = builder.Build();

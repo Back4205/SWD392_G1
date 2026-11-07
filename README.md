@@ -2,6 +2,8 @@
 
 Backend ASP.NET Core Web API 8 + EF Core/SQL Server, Frontend React 18 + TypeScript/Vite.
 
+[Hướng dẫn demo theo class/sequence và State Diagram đã thống nhất](docs/inbound-demo-guide.md).
+
 ## Phạm vi
 
 - Manager tạo yêu cầu nhập và chọn nhân viên thuộc kho.
@@ -22,7 +24,7 @@ EWMS/
     Controllers/        # API đăng nhập, Inbound và Goods Receipt
     Services/           # Validate và xử lý nghiệp vụ
     Interfaces/         # Hợp đồng service/repository
-    Repositories/       # Repository Inbound có sẵn
+    Repositories/       # User, Inbound, GoodsReceipt, Scan, Serial, Stock và GenericRepository
     DTOs/               # Request/response, map thủ công
     Entities/           # Entity theo schema SDS
     Data/               # DbContext
@@ -34,12 +36,12 @@ frontend/
   src/features/inbound/          # Yêu cầu nhập, NCC, duyệt, tiến độ
   src/features/goods-receipts/   # Nhận hàng, serial, bin, duyệt phiếu
   src/api/                       # Fetch, cookie và CSRF
-  src/hooks/                     # Điều hướng theo vai trò
+  src/hooks/                     # Điều hướng và lifecycle chi tiết Inbound/Goods Receipt
 start-dev.cmd / start-dev.ps1     # Chạy API và React
 stop-dev.cmd / stop-dev.ps1       # Dừng đúng các process đã khởi động
 ```
 
-Entity/schema dùng chung vẫn được giữ vì DbContext, quan hệ và migration SDS phụ thuộc vào chúng. Chưa có màn hình hoặc API Outbound/Transfer/Inventory trong bản này. `IStockService` và `IInboundService` được nối với service thật dùng chung DbContext, không dùng mock trong ứng dụng. Dữ liệu kiểm thử chỉ được tạo trong database GUID riêng của project test.
+Entity/schema dùng chung vẫn được giữ vì DbContext, quan hệ và migration SDS phụ thuộc vào chúng. Chưa có màn hình hoặc API Outbound/Transfer/Inventory trong bản này. CRUD đầy đủ Product/Supplier/Warehouse và SMTP Email Service nằm ngoài phần Inbound đã triển khai; entity/lookup tương ứng đã có. `IStockService` và `IInboundService` được nối với service thật dùng chung DbContext, không dùng mock trong ứng dụng. Dữ liệu kiểm thử chỉ được tạo trong database GUID riêng của project test.
 
 ## Chạy trong terminal VS Code
 
@@ -71,7 +73,7 @@ Các script .cmd gọi PowerShell trong process riêng, không thay đổi Execu
 | UC56 — Duyệt phiếu | GoodsReceiptApprovalService | ReceiptDecisionDialog |
 | Cộng tồn, tính tiến độ | StockReceivingService, InboundReceivingService | InboundReceivingProgress |
 
-Service dùng if/foreach, map DTO thủ công. DI trong Program.cs đăng ký AddScoped để các service cùng HTTP request dùng chung DbContext/transaction. Receipt dùng rowversion; web gửi revision khi sửa/duyệt Inbound để phát hiện dữ liệu cũ. Manager/Purchasing chỉ thấy tiến độ khi đã có Receipt thật.
+Đường xử lý chính: Controller → Service → Repository → EWMSDbContext. Service điều phối nghiệp vụ/transaction; entity thực hiện các operation như RecordApproval, UpdateQuantity và IncreaseOnHand. DI đăng ký scoped repository/service để dùng chung DbContext trong một HTTP request. Receipt dùng rowversion; web gửi revision khi sửa/duyệt Inbound để phát hiện dữ liệu cũ. Manager/Purchasing chỉ thấy tiến độ khi đã có Receipt thật. Không có migration/schema mới trong đợt đồng bộ SDS này.
 
 ## Kiểm tra
 

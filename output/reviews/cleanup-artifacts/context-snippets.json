@@ -1,0 +1,29 @@
+{
+  "skill": "ck:cook",
+  "mode": "auto",
+  "task": "Remove proven unused code without changing working inbound flow",
+  "acceptanceCriteria": [
+    "Only proven dead code removed",
+    "State and HTTP/schema contracts unchanged",
+    "SDS operations retained",
+    "Build, focused tests and frontend checks pass"
+  ],
+  "touchpoints": [
+    "IInboundRequestRepository",
+    "InboundRequestRepository",
+    "Inbound DTO imports",
+    "goodsReceipt.api.ts",
+    "receipt.helpers.ts",
+    "App.css"
+  ],
+  "publicContracts": [
+    "HTTP routes, payloads, schema and states unchanged",
+    "Internal unused repository methods removed"
+  ],
+  "blastRadius": [
+    "Inbound repository consumers",
+    "Receipt API helper imports",
+    "Sidebar markup/styles"
+  ],
+  "scoutSummary": "Two independent scouts verified absence of callers and unreachable CSS. User receipt/font edits and development repair utility preserved."
+}

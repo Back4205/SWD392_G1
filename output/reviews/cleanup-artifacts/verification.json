@@ -1,0 +1,40 @@
+{
+  "commands": [
+    {
+      "command": "dotnet build EWMS/EWMS.Api.Tests/EWMS.Api.Tests.csproj --no-restore --verbosity minimal -p:OutputPath=<temporary-output>",
+      "status": "pass",
+      "exitCode": 0,
+      "timestamp": "2026-11-07T07:47:00.677Z",
+      "summary": "API/test build passed with zero warnings and errors; live application not stopped."
+    },
+    {
+      "command": "dotnet vstest <temporary-output>/EWMS.Api.Tests.dll --TestCaseFilter:<Auth+Entity+GoodsReceiptHTTP+InboundDecisionHTTP>",
+      "status": "pass",
+      "exitCode": 0,
+      "timestamp": "2026-11-07T07:47:00.677Z",
+      "summary": "29 passed, zero failed. Explicit allowlist excludes development database repair test."
+    },
+    {
+      "command": "npm.cmd run lint",
+      "status": "pass",
+      "exitCode": 0,
+      "timestamp": "2026-11-07T07:47:00.677Z",
+      "summary": "ESLint passed."
+    },
+    {
+      "command": "npm.cmd run build",
+      "status": "pass",
+      "exitCode": 0,
+      "timestamp": "2026-11-07T07:47:00.677Z",
+      "summary": "TypeScript and Vite production build passed."
+    }
+  ],
+  "beforeAfter": {
+    "before": "Five unused legacy repository methods, dead frontend session wrapper/error alias, nine redundant using directives and three unreachable CSS rules.",
+    "after": "Removed verified dead code; consumers use active validation, generic update and original ApiError identity."
+  },
+  "notes": [
+    "Normal backend output locked by running user app; separate fresh output used.",
+    "Pre-cleanup HTTP500 did not reproduce in focused tests; original cause remains unconfirmed. Full suite not claimed passing."
+  ]
+}

@@ -1,0 +1,2867 @@
+
+--- PAGE 1 ---
+SOFTWARE ARCHITECTURE AND DESIGN 
+Report 2 
+Course Project Report 
+1 | Page 
+--- PAGE 2 ---
+– Hanoi, Sep 2026 – 
+Table of Contents 
+I. Software Design....................................................................................................................................4 
+1. High Level Design.......................................................................................................................... 4 
+1.1 Software Architecture.......................................................................................................... 4 
+1.2 Package Diagram.................................................................................................................. 5 
+2. Database Design........................................................................................................................... 8 
+2.1 Database diagram.................................................................................................................8 
+2.2.Table Descriptions.................................................................................................................9 
+3. Detailed Design........................................................................................................................... 23 
+3.1 Authentication Feature.......................................................................................................23 
+3.2 Import Goods: Inbound Request & Supplier......................................................... 27 
+3.3 Import Goods: Goods Receipt & Stock Receiving................................................ 35 
+3.4 Inventory Count Process...................................................................................... 41 
+3.5 Outbound Process................................................................................................ 45 
+3.6 Transfer Order Process........................................................................................ 53 
+3.7 Class Specifications.............................................................................................................69 
+3.8 State machine diagram.....................................................................................................108 
+2 | Page 
+--- PAGE 3 ---
+Record of Changes 
+Date   A* 
+M, D 
+In charge   Change Description 
+*A - Added M - Modified D - Deleted 
+3 | Page 
+--- PAGE 4 ---
+I. Software Design 
+1. High Level Design 
+1.1 Software Architecture 
+The EWMS follows a layered client-server architecture. The   React 18 frontend   provides the user
+interface for system users and communicates with the   ASP.NET Core Web API   through   RESTful APIs .
+The backend contains controllers and services that handle requests, business logic, authentication,
+authorization, and email-related operations. The Data Access Layer uses   Entity Framework Core , 
+4 | Page 
+--- PAGE 5 ---
+repositories, and   DbContext   to access the   SQL Server database .   Barcode/QR scanners   and   thermal
+label printers   support warehouse operations such as receiving goods, dispatching goods, and printing
+labels. 
+1.2 Package Diagram 
+1.2.1 Frontend Package Diagram 
+Package Descriptions 
+5 | Page 
+--- PAGE 6 ---
+No   Package   Description 
+01   Pages   Contains the main application pages such as Login, Dashboard, Product,
+Warehouse, Inbound, Outbound, Transfer, and Inventory pages. 
+02   Components   Contains reusable user interface components such as forms, tables, buttons,
+dialogs, search boxes, and other shared UI elements. 
+03   Hooks   Contains reusable React hooks for handling state, shared logic, and data-related
+operations used by pages and components. 
+04   API Services   Contains frontend service functions that call backend APIs, send requests, receive
+responses, and provide data to the frontend. 
+05   API   Contains the base HTTP client, API configuration, endpoint settings, and common
+request handling used to communicate with the ASP.NET Core Web API. 
+06   Utils   Contains shared helper functions, formatting functions, validation functions,
+constants, and other common frontend utilities. 
+6 | Page 
+--- PAGE 7 ---
+1.2.2 Backend Package Diagram 
+Package Descriptions 
+No   Package   Description 
+07   Controllers   Receives HTTP requests from the frontend, calls the appropriate services, and
+returns API responses. 
+7 | Page 
+--- PAGE 8 ---
+08   Services   Contains the main business logic of the system and handles operations such as
+validation, inventory processing, user management, and warehouse operations. 
+09   Repositories   Handles data access operations such as reading, creating, updating, and deleting
+data from the database. 
+10   Data   Contains Entity Framework Core DbContext, database configurations, mappings,
+and connection-related settings. 
+11   Entities   Contains the main system data models such as User, Product, Warehouse, Stock,
+InboundRequest, OutboundRequest, and other entities. 
+12   DTOs   Contains Data Transfer Objects used to transfer request and response data
+between the frontend and backend without exposing database entities directly. 
+13   Integrations   Handles communication with external services such as Email Provider / SMTP and
+other third-party services. 
+14   Common   Contains shared helper functions, constants, common exceptions, and reusable
+backend utilities. 
+2. Database Design 
+2.1 Database diagram 
+8 | Page 
+--- PAGE 9 ---
+2.2.Table Descriptions 
+2.2.1 Permission 
+The Permission table stores permissions that can be assigned to system roles. 
+No   Field   Data Type   PK   FK   UN   NN   Description 
+01   Id   int   X   X   X   Unique identifier for each permission. 
+02   PermissionName   varchar(100)   X   X   Unique name of the permission. 
+03   Description   varchar(255)   Description of the permission and its
+purpose. 
+2.2.2 Role 
+The Role table stores system roles used for role-based access control. 
+No   Field   Data Type   PK   FK   UN   NN   Description 
+01   Id   int   X   X   X   Unique identifier for each role. 
+9 | Page 
+--- PAGE 10 ---
+02   RoleName   varchar(50)   X   X   Unique role name, such as Admin or
+Manager. 
+03   Description   varchar(255)   Description of the role and its
+responsibilities. 
+2.2.3 RolePermission 
+The RolePermission table represents the many-to-many relationship between roles and permissions. 
+No   Field   Data Type   PK   FK   UN   NN   Description 
+01   RoleId   int   X   X   X   References the role receiving the
+permission. 
+02   PermissionId   int   X   X   X   References the permission assigned to
+the role. 
+2.2.4 User 
+The User table stores internal system accounts and profile information. 
+No   Field   Data Type   PK   FK   UN   NN   Description 
+01   Id   int   X   X   X   Unique identifier for each user. 
+02   RoleId   int   X   X   References the role assigned to the user. 
+03   UserName   varchar(50)   X   X   Unique username used for login. 
+04   PasswordHash   varchar(255)   X   Stores the hashed user password. 
+05   FullName   varchar(100)   X   Full name of the user. 
+06   Email   varchar(100)   X   Unique email address of the user. 
+07   PhoneNumber   varchar(20)   X   User's phone number. 
+08   Status   varchar(20)   X   Current account status, such as Active or
+Inactive. 
+2.2.5 UserWarehouse 
+The UserWarehouse table specifies which warehouses a user is authorized to access. 
+No   Field   Data Type   PK   FK   UN   NN   Description 
+01   UserId   int   X   X   X   References an authorized user. 
+02   WarehouseId   int   X   X   X   References a warehouse accessible to
+the user. 
+2.2.6 StorageSectionType 
+The StorageSectionType table defines different types of storage sections. 
+No   Field   Data Type   PK   FK   UN   NN   Description 
+01   Id   int   X   X   X   Unique identifier for each section type. 
+02   TypeCode   varchar(50)   X   X   Unique code of the storage section type. 
+03   Description   varchar(255)   Description of the storage type. 
+10 | Page 
+--- PAGE 11 ---
+2.2.7 Warehouse 
+The Warehouse table stores information and capacity settings for physical warehouses. 
+N
+o   Field   Data Type   PK   FK   UN   NN   Description 
+01   Id   int   X   X   X   Unique identifier for each
+warehouse. 
+02   WarehouseCode   varchar(50)   X   X   Unique business code for the
+warehouse. 
+03   WarehouseName   varchar(100)   X   Name of the warehouse. 
+04   Address   varchar(255)   X   Physical warehouse address. 
+05   PhoneNumber   varchar(20)   Contact phone number of the
+warehouse. 
+06   ManagerUserId   int   X   X   References the user responsible
+for managing the warehouse. 
+07   Area   decimal(12,2)   X   Physical area of the warehouse. 
+08   MaxStorageSection   int   X   Maximum number of storage
+sections allowed. 
+09   MaxWeightKg   decimal(12,2)   X   Maximum total storage weight
+supported by the warehouse. 
+10   Status   varchar(20)   X   Current operational status of the
+warehouse. 
+2.2.8 StorageSection 
+The StorageSection table represents storage sections located inside a warehouse. 
+No   Field   Data Type   PK   FK   UN   NN   Description 
+01   Id   int   X   X   X   Unique identifier for each storage section. 
+02   WarehouseId   int   X   X   References the warehouse containing the
+section. 
+03   StorageSection
+TypeId 
+int   X   X   References the type of the section. 
+04   SectionCode   varchar(50)   X   Code identifying the section inside the
+warehouse. 
+05   SectionName   varchar(100
+) 
+X   Display name of the storage section. 
+06   MaxRackCount   int   X   Maximum number of racks allowed in the
+section. 
+2.2.9 StorageRack 
+The StorageRack table stores storage racks located inside warehouse sections. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+0
+1 
+Id   int   X   X   X   Unique identifier for each rack. 
+11 | Page 
+--- PAGE 12 ---
+0
+2 
+SectionId   int   X   X   References the section containing the
+rack. 
+0
+3 
+RackCode   varchar(50)   X   Rack code within the section. 
+0
+4 
+MaxBinCoun
+t 
+int   X   Maximum number of bins allowed in the
+rack. 
+0
+5 
+MaxWeightK
+g 
+decimal(10,2
+) 
+X   Maximum total weight supported by the
+rack. 
+0
+6 
+LengthCm   decimal(10,2
+) 
+Physical length of the rack in
+centimeters. 
+0
+7 
+WidthCm   decimal(10,2
+) 
+Physical width of the rack in centimeters. 
+0
+8 
+HeightCm   decimal(10,2
+) 
+Physical height of the rack in centimeters. 
+2.2.10 StorageBin 
+The StorageBin table represents individual storage bins inside racks. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+0
+1 
+Id   int   X   X   X   Unique identifier for each storage bin. 
+0
+2 
+RackId   int   X   X   References the rack containing the bin. 
+0
+3 
+BinCode   varchar(50)   X   Code identifying the bin within the rack. 
+0
+4 
+BinName   varchar(100)   X   Display name of the storage bin. 
+0
+5 
+MaxWeightK
+g 
+decimal(10,2
+) 
+X   Maximum weight supported by the bin. 
+2.2.11 Supplier 
+The Supplier table stores supplier profile and contact information. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+0
+1 
+Id   int   X   X   X   Unique identifier for each supplier. 
+0
+2 
+SupplierCod
+e 
+varchar(50)   X   X   Unique supplier code. 
+0
+3 
+SupplierNam
+e 
+varchar(100)   X   Name of the supplier. 
+0
+4 
+ContactPers
+on 
+varchar(100)   X   Main contact person of the supplier. 
+0
+5 
+Email   varchar(100)   Supplier email address. 
+12 | Page 
+--- PAGE 13 ---
+0
+6 
+PhoneNumb
+er 
+varchar(20)   Supplier phone number. 
+0
+7 
+Address   varchar(255)   Supplier address. 
+0
+8 
+Status   varchar(20)   X   Current supplier status. 
+2.2.12 Category 
+The Category table stores hierarchical product categories. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+0
+1 
+Id   int   X   X   X   Unique identifier for each category. 
+0
+2 
+ParentId   int   X   References the parent category for
+hierarchical organization. 
+0
+3 
+CategoryNa
+me 
+varchar(100)   X   X   Unique name of the category. 
+2.2.13 Product 
+The Product table stores general product information. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+0
+1 
+Id   int   X   X   X   Unique identifier for each product. 
+0
+2 
+CategoryId   int   X   X   References the category of the product. 
+0
+3 
+ProductCode   varchar(50)   X   X   Unique business code of the product. 
+0
+4 
+ProductNam
+e 
+varchar(100)   X   Product name. 
+0
+5 
+Brand   varchar(100)   X   Brand of the product. 
+0
+6 
+Model   varchar(100)   X   Product model. 
+0
+7 
+Status   varchar(20)   X   Current product status. 
+2.2.14 ProductSupplier 
+The ProductSupplier table stores supplier-specific information for products. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+13 | Page 
+--- PAGE 14 ---
+0
+1 
+ProductId   int   X   X   X   References the product supplied. 
+0
+2 
+SupplierId   int   X   X   X   References the supplier. 
+0
+3 
+SupplierSKU   varchar(100)   SKU used by the supplier. 
+0
+4 
+UnitPrice   decimal(18,2
+) 
+Supplier's unit price for the product. 
+0
+5 
+LeadTimeDa
+ys 
+int   Expected supplier lead time in days. 
+0
+6 
+IsPreferred   int   X   Indicates whether this supplier is
+preferred for the product. 
+2.2.15 ProductVariant 
+The ProductVariant table stores specific variants of a product. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+0
+1 
+Id   int   X   X   X   Unique identifier for each product
+variant. 
+0
+2 
+ProductId   int   X   References the base product. 
+0
+3 
+SKU   varchar(100)   X   X   Unique stock keeping unit of the variant. 
+0
+4 
+VariantNam
+e 
+varchar(100)   Display name of the variant. 
+0
+5 
+Color   varchar(50)   Product color. 
+0
+6 
+Capacity   varchar(50)   Variant capacity or size information. 
+0
+7 
+WeightKg   decimal(10,2
+) 
+X   Weight of one physical unit in kilograms. 
+0
+8 
+CostPrice   decimal(18,2
+) 
+X   Cost price of the product variant. 
+0
+9 
+SellingPrice   decimal(18,2
+) 
+X   Selling price of the product variant. 
+1
+0 
+WarrantyMo
+nths 
+int   Warranty period in months. 
+1
+1 
+Specs   varchar(500)   Technical specifications of the variant. 
+2.2.16 InboundRequest 
+The InboundRequest table stores requests for importing goods into a warehouse. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+01   Id   int   X   X   X   Unique identifier for each inbound
+request. 
+02   WarehouseId   int   X   X   References the destination warehouse. 
+14 | Page 
+--- PAGE 15 ---
+03   SupplierId   int   X   References the supplier associated with
+the request. 
+04   RequestedByUs
+erId 
+int   X   X   References the user who created the
+request. 
+05   ApprovedByUs
+erId 
+int   X   References the user who approved the
+request. 
+06   SupplierCommi
+tmentStatus 
+varchar(30)   Stores the supplier's acceptance or
+rejection status. 
+07   ExpectedDelive
+ryDate 
+datetime2   Expected delivery date confirmed with
+the supplier. 
+08   RejectionReaso
+n 
+varchar(255)   Reason for rejecting the request, if
+applicable. 
+09   Status   varchar(30)   X   Current workflow status of the inbound
+request. 
+10   CreatedDate   datetime2   X   Date and time when the request was
+created. 
+2.2.17 InboundRequestItem 
+The InboundRequestItem table stores products and expected quantities of an inbound request. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+0
+1 
+Id   int   X   X   X   Unique identifier for each inbound
+request item. 
+0
+2 
+InboundReq
+uestId 
+int   X   X   References the associated inbound
+request. 
+0
+3 
+ProductVari
+antId 
+int   X   X   References the requested product
+variant. 
+0
+4 
+ExpectedQty   int   X   Expected quantity to be received. 
+2.2.18 GoodsReceipt 
+The GoodsReceipt table stores records created when incoming goods are physically received. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+0
+1 
+Id   int   X   X   X   Unique identifier for each goods receipt. 
+0
+2 
+InboundReq
+uestId 
+int   X   X   References the related inbound request. 
+0
+3 
+ReceivedByU
+serId 
+int   X   X   References the warehouse staff who
+received the goods. 
+0
+4 
+ReceivedDat
+e 
+datetime2   X   Date and time when goods were
+received. 
+0
+5 
+Status   varchar(30)   X   Current status of the goods receipt. 
+15 | Page 
+--- PAGE 16 ---
+2.2.19 GoodsReceiptItem 
+The GoodsReceiptItem table stores actual received quantities and destination bins. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+0
+1 
+Id   int   X   X   X   Unique identifier for each goods receipt
+item. 
+0
+2 
+GoodsReceip
+tId 
+int   X   X   References the associated goods receipt. 
+0
+3 
+ProductVari
+antId 
+int   X   X   References the received product variant. 
+0
+4 
+BinId   int   X   X   References the destination storage bin. 
+0
+5 
+ReceivedQty   int   X   Actual quantity received. 
+2.2.20 TransferOrder 
+The TransferOrder table stores requests for transferring stock between warehouses or storage
+locations. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+0
+1 
+Id   int   x   x   x   Unique identifier for each transfer order. 
+0
+2 
+FromWareh
+ouseId 
+int   x   x   References the source warehouse. 
+0
+3 
+ToWarehous
+eId 
+int   x   x   References the destination warehouse. 
+0
+4 
+RequestedBy
+UserId 
+int   x   x   References the user who created the
+transfer request. 
+0
+5 
+ApprovedBy
+UserId 
+int   x   References the user who approved the
+transfer. 
+0
+6 
+DestinationS
+taffUserId 
+int   x   References the staff member responsible
+for receiving transferred goods. 
+0
+7 
+Status   varchar(30)   x   Current transfer order status. 
+0
+8 
+CreatedDate   datetime2   x   Date and time when the transfer order
+was created. 
+2.2.21 TransferOrderItem 
+The TransferOrderItem table stores product quantities and source/destination bins for a transfer. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+0
+1 
+Id   int   x   x   x   Unique identifier for each transfer order
+item. 
+0
+2 
+TransferOrd
+erId 
+int   x   x   References the associated transfer order. 
+16 | Page 
+--- PAGE 17 ---
+0
+3 
+ProductVari
+antId 
+int   x   x   References the transferred product
+variant. 
+0
+4 
+FromBinId   int   x   x   References the source storage bin. 
+0
+5 
+ToBinId   int   x   x   References the destination storage bin. 
+0
+6 
+RequestedQt
+y 
+int   x   Quantity expected to be transferred. 
+0
+7 
+ActualReceiv
+edQty 
+int   Quantity actually received at the
+destination. 
+0
+8 
+Discrepancy
+Note 
+varchar(255)   Notes explaining transfer quantity
+discrepancies. 
+2.2.22 TransferOrderSerial 
+The TransferOrderSerial table records individual Serial/IMEI units included in transfer orders. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+0
+1 
+Id   int   x   x   x   Unique identifier for each transfer serial
+record. 
+0
+2 
+TransferOrd
+erItemId 
+int   x   x   References the transfer order item. 
+0
+3 
+SerialNumbe
+rId 
+int   x   x   References the Serial/IMEI being
+transferred. 
+0
+4 
+Status   varchar(30)   x   Current transfer status of the serial unit. 
+0
+5 
+DispatchedA
+t 
+datetime2   Time when the serial unit left the source
+location. 
+0
+6 
+ReceivedAt   datetime2   Time when the serial unit was received at
+the destination. 
+2.2.23 InventorySheet 
+The InventorySheet table stores physical inventory counting sessions. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+0
+1 
+Id   int   X   X   X   Unique identifier for each inventory
+sheet. 
+0
+2 
+WarehouseI
+d 
+int   X   X   References the warehouse being
+counted. 
+0
+3 
+CreatedByUs
+erId 
+int   X   X   References the user who created the
+inventory sheet. 
+0
+4 
+ApprovedBy
+UserId 
+int   X   References the user who approved the
+inventory results. 
+0
+5 
+Status   varchar(30)   X   Current status of the inventory sheet. 
+0
+6 
+RejectionRea
+son 
+varchar(255)   Reason the inventory sheet was rejected. 
+17 | Page 
+--- PAGE 18 ---
+0
+7 
+CreatedDate   datetime2   X   Date and time the sheet was created. 
+2.2.24 InventorySheetItem 
+The InventorySheetItem table stores expected and physically counted quantities for product variants. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+0
+1 
+Id   int   X   X   X   Unique identifier for each inventory sheet
+item. 
+0
+2 
+InventoryShe
+etId 
+int   X   X   References the associated inventory
+sheet. 
+0
+3 
+BinId   int   X   X   References the storage bin being
+counted. 
+0
+4 
+ProductVari
+antId 
+int   X   X   References the counted product variant. 
+0
+5 
+SystemQty   int   X   Quantity recorded by the system before
+physical counting. 
+0
+6 
+ActualQty   int   Actual physical quantity entered by
+warehouse staff. 
+0
+7 
+Note   varchar(255)   Additional notes about the inventory
+count. 
+2.2.25 InventorySheetTrack 
+The InventorySheetTrack table stores inventory recount history for inventory sheet items. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+0
+1 
+Id   int   X   X   X   Unique identifier for each recount record. 
+0
+2 
+InventoryShe
+etItemId 
+int   X   X   References the inventory sheet item
+being counted. 
+0
+3 
+CountedByU
+serId 
+int   X   X   References the staff member performing
+the count. 
+0
+4 
+CountedQty   int   X   Quantity recorded during this count. 
+0
+5 
+Note   varchar(255)   Notes recorded during the counting
+attempt. 
+0
+6 
+CountedAt   datetime2   X   Date and time when the count was
+performed. 
+2.2.26 InventorySheetSerial 
+The InventorySheetSerial table records individual Serial/IMEI verification during inventory counting. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+0
+1 
+Id   int   X   X   X   Unique identifier for each serial
+verification record. 
+18 | Page 
+--- PAGE 19 ---
+0
+2 
+InventoryShe
+etId 
+int   X   X   References the inventory sheet. 
+0
+3 
+SerialNumbe
+rId 
+int   X   X   References the Serial/IMEI being verified. 
+0
+4 
+ExpectedBinI
+d 
+int   X   Bin where the serial is expected to be
+located. 
+0
+5 
+ScannedBinI
+d 
+int   X   Bin where the serial was physically
+scanned. 
+0
+6 
+IsExpected   bit   X   Indicates whether the serial was
+expected in the inventory sheet. 
+0
+7 
+IsScanned   bit   X   Indicates whether the serial was
+physically scanned. 
+0
+8 
+ResultStatus   varchar(30)   X   Verification result such as MATCHED,
+MISSING, WRONG_BIN or UNEXPECTED. 
+0
+9 
+CountedByU
+serId 
+int   X   References the staff member who
+performed the scan. 
+1
+0 
+ScannedAt   datetime2   Date and time when the serial was
+scanned. 
+2.2.27 OutboundRequest 
+The OutboundRequest table stores requests to issue products from a warehouse. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+0
+1 
+Id   int   X   X   X   Unique identifier for each outbound
+request. 
+0
+2 
+WarehouseI
+d 
+int   X   X   References the source warehouse. 
+0
+3 
+RequestedBy
+UserId 
+int   X   X   References the user who created the
+request. 
+0
+4 
+ApprovedBy
+UserId 
+int   X   References the user who approved the
+request. 
+0
+5 
+CustomerNa
+me 
+varchar(100)   Name of the receiving customer. 
+0
+6 
+CustomerEm
+ail 
+varchar(100)   Customer email address. 
+0
+7 
+CustomerPh
+one 
+varchar(20)   Customer phone number. 
+0
+8 
+DestinationA
+ddress 
+varchar(255)   Destination or delivery address. 
+0
+9 
+Reason   varchar(255)   Business reason for the outbound
+request. 
+1
+0 
+RejectionRea
+son 
+varchar(255)   Reason for rejecting the outbound
+request. 
+1
+1 
+Status   varchar(30)   X   Current status of the outbound request. 
+1
+2 
+CreatedDate   datetime2   X   Date and time when the request was
+created. 
+19 | Page 
+--- PAGE 20 ---
+2.2.28 OutboundRequestItem 
+The OutboundRequestItem table stores requested product variants and quantities. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+0
+1 
+Id   int   X   X   X   Unique identifier for each outbound
+request item. 
+0
+2 
+OutboundRe
+questId 
+int   X   X   References the associated outbound
+request. 
+0
+3 
+ProductVari
+antId 
+int   X   X   References the requested product
+variant. 
+0
+4 
+RequestedQt
+y 
+int   X   Quantity requested for outbound
+processing. 
+2.2.29 DeliveryOrder 
+The DeliveryOrder table stores outbound dispatch records created from approved outbound
+requests. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+0
+1 
+Id   int   X   X   X   Unique identifier for each delivery order. 
+0
+2 
+OutboundRe
+questId 
+int   X   X   References the related outbound request. 
+0
+3 
+CreatedByUs
+erId 
+int   X   X   References the user who created the
+delivery order. 
+0
+4 
+DeliveryDate   datetime2   Date and time when delivery or dispatch
+occurred. 
+0
+5 
+Status   varchar(30)   X   Current delivery order status. 
+2.2.30 DeliveryOrderItem 
+The DeliveryOrderItem table stores product quantities dispatched from specific bins. 
+N
+o   Field   Data Type   P
+K 
+FK   U
+N 
+N
+N   Description 
+0
+1 
+Id   int   X   X   X   Unique identifier for each delivery item. 
+0
+2 
+DeliveryOrd
+erId 
+int   X   X   References the delivery order. 
+0
+3 
+ProductVari
+antId 
+int   X   X   References the dispatched product
+variant. 
+0
+4 
+BinId   int   X   X   References the source storage bin. 
+0
+5 
+DispatchedQ
+ty 
+int   X   Quantity actually dispatched from the
+warehouse. 
+20 | Page 
+--- PAGE 21 ---
+2.2.31 Stock 
+The Stock table stores inventory balances for product variants at each storage bin. 
+No   Field   Data
+Type 
+PK   FK   UN   NN   Description 
+01   Id   int   X   X   X   Unique identifier for each stock record. 
+02   ProductVariantId   int   X   X   References the stored product variant. 
+03   BinId   int   X   X   References the storage bin containing the
+stock. 
+04   OnHandQty   int   X   Physical quantity currently recorded in
+the bin. 
+05   ReservedQty   int   X   Quantity reserved for approved
+outbound operations. 
+2.2.32 SerialNumber 
+The SerialNumber table stores individual Serial Number or IMEI records and tracks their current
+lifecycle state. 
+No   Field   Data Type   PK   FK   UN   NN   Description 
+01   Id   int   X   X   X   Unique identifier for each serial record. 
+02   ProductVariantId   int   X   X   References the product variant represented
+by the serial. 
+03   OriginGoodsReceiptI
+temId 
+int   X   References the goods receipt item where
+the serial originally entered the system. 
+04   ReservedForOutboun
+dItemId 
+int   X   References the outbound request item
+currently reserving the serial. 
+05   CurrentBinId   int   X   References the current storage bin of the
+serial unit. 
+06   DispatchedInDeliver
+yItemId 
+int   X   References the delivery item through which
+the serial was dispatched. 
+07   SerialCode   varchar(100
+) 
+X   X   Unique Serial Number or IMEI value. 
+08   CurrentStatus   varchar(30)   X   Current lifecycle status such as IN_STOCK,
+RESERVED, IN_TRANSIT or DISPATCHED. 
+2.2.33 SerialMovement 
+The SerialMovement table stores movement history for individual Serial/IMEI units. 
+No   Field   Data Type   PK   FK   UN   NN   Description 
+01   Id   int   x   x   x   Unique identifier for each serial movement
+record. 
+02   SerialNumberId   int   x   x   References the Serial/IMEI being moved. 
+03   FromBinId   int   x   References the previous storage bin, when
+applicable. 
+04   ToBinId   int   x   References the destination storage bin,
+when applicable. 
+05   PerformedByUser
+Id 
+int   x   x   References the user responsible for the
+movement. 
+21 | Page 
+--- PAGE 22 ---
+06   MovementType   varchar(50)   x   Type of movement, such as receipt,
+transfer, adjustment or dispatch. 
+07   RefType   varchar(50)   Identifies the business transaction type
+related to the movement. 
+08   RefId   int   Stores the identifier of the related business
+transaction. 
+09   MovementDate   datetime2   x   Date and time when the movement
+occurred. 
+2.2.34 AuditLog 
+The AuditLog table stores records of important system actions and data changes. 
+No   Field   Data Type   PK   FK   UN   NN   Description 
+01   Id   int   x   x   x   Unique identifier for each audit log
+record. 
+02   UserId   int   x   x   References the user who performed the
+action. 
+03   Action   varchar(100)   x   Name or type of action performed. 
+04   EntityName   varchar(100)   x   Name of the affected entity or table. 
+05   EntityId   int   Identifier of the affected record. 
+06   OldValue   text   Previous data before the change. 
+07   NewValue   text   New data after the change. 
+08   CreatedAt   datetime2   x   Date and time when the action was
+logged. 
+3. Detailed Design 
+3.1 Authentication Feature 
+3.1.1 Class Diagram 
+3.1.1.1 Authentication Management 
+22 | Page 
+--- PAGE 23 ---
+23 | Page 
+--- PAGE 24 ---
+3.1.2 Sequence Diagram 
+3.1.2.1 Log in 
+24 | Page 
+--- PAGE 25 ---
+3.1.2.2 Log out 
+25 | Page 
+--- PAGE 26 ---
+3.1.2.3 Change Password 
+26 | Page 
+--- PAGE 27 ---
+3.2 Import Goods: Inbound Request & Supplier 
+3.2.1 Class Diagram 
+3.2.1.1 Inbound Request Management 
+27 | Page 
+--- PAGE 28 ---
+3.2.1.2 Supplier Commitment Management 
+28 | Page 
+--- PAGE 29 ---
+3.2.1.3 Inbound Request Approval Management 
+29 | Page 
+--- PAGE 30 ---
+3.2.2 Sequence Diagram 
+3.2.2.1 View Inbound Request List 
+3.2.2.2 View Inbound Request Detail 
+30 | Page 
+--- PAGE 31 ---
+3.2.2.3 Create Inbound Request 
+31 | Page 
+--- PAGE 32 ---
+3.2.2.4 Update Supplier Commitment 
+32 | Page 
+--- PAGE 33 ---
+3.2.2.5 Approve Inbound Request 
+33 | Page 
+--- PAGE 34 ---
+3.2.2.6 Reject Inbound Request 
+34 | Page 
+--- PAGE 35 ---
+3.3 Import Goods: Goods Receipt & Stock Receiving 
+3.3.1 Class Diagram 
+3.3.1.1 Goods Receipt Management 
+35 | Page 
+--- PAGE 36 ---
+3.3.1.2 Serial Validation & Recording 
+36 | Page 
+--- PAGE 37 ---
+3.3.1.3 Stock Update Management 
+37 | Page 
+--- PAGE 38 ---
+3.3.2 Sequence Diagram 
+3.3.2.1 View Goods Receipt List 
+3.3.2.2 View Goods Receipt Detail 
+38 | Page 
+--- PAGE 39 ---
+3.3.2.3 Create Goods Receipt 
+3.3.2.4 Update / Confirm Goods Receipt 
+39 | Page 
+--- PAGE 40 ---
+3.3.2.5 Enter & Validate Serial (Inbound) 
+3.3.2.6 Approve or Reject Goods Receipt 
+40 | Page 
+--- PAGE 41 ---
+3.4 Inventory Count Process 
+3.4.1 Class Diagram 
+3.4.1.1 Inventory Sheet Management 
+41 | Page 
+--- PAGE 42 ---
+3.4.1.2 Physical Inventory Counting & Tracking 
+3.4.1.3 Inventory Discrepancy & Reconciliation 
+42 | Page 
+--- PAGE 43 ---
+3.4.2 Sequence Diagram 
+3.4.2.1 View Inventory Sheet List 
+43 | Page 
+--- PAGE 44 ---
+3.4.2.2 View Inventory Sheet Detail 
+3.4.2.3 Create Inventory Sheet 
+44 | Page 
+--- PAGE 45 ---
+3.4.2.4 Update Inventory Sheet 
+45 | Page 
+--- PAGE 46 ---
+3.4.2.5 Recount Inventory Sheet 
+46 | Page 
+--- PAGE 47 ---
+3.4.2.6 Clear Inventory Discrepancy 
+47 | Page 
+--- PAGE 48 ---
+3.5 Outbound Process 
+3.5.1 Class Diagram 
+3.5.1.1 Outbound Request Management 
+3.5.1.2 Stock Availability & Reservation 
+48 | Page 
+--- PAGE 49 ---
+49 | Page 
+--- PAGE 50 ---
+3.5.1.3 Delivery Order & Stock Deduction 
+50 | Page 
+--- PAGE 51 ---
+3.5.2 Sequence Diagram 
+3.5.2.1 View Product / Inventory List 
+3.5.2.2 View Outbound Request List 
+51 | Page 
+--- PAGE 52 ---
+3.5.2.3 View Outbound Request Detail 
+3.5.2.4 Create Outbound Request 
+52 | Page 
+--- PAGE 53 ---
+3.5.2.5 Approve / Reject Outbound Request 
+53 | Page 
+--- PAGE 54 ---
+3.5.2.6 Enter & Validate Serial/IMEI (Outbound) 
+54 | Page 
+--- PAGE 55 ---
+3.5.2.6 Confirm Delivery & Deduct Stock 
+55 | Page 
+--- PAGE 56 ---
+3.6 Transfer Order Process 
+3.6.1 Class Diagram 
+3.6.1.1 Create Transfer Order 
+56 | Page 
+--- PAGE 57 ---
+3.6.1.2 Pick, Dispatch & Receive 
+57 | Page 
+--- PAGE 58 ---
+3.6.1.3 Resolve Transfer Discrepancy 
+3.6.2 Sequence Diagram 
+3.6.2.1 Create Transfer Order 
+58 | Page 
+--- PAGE 59 ---
+3.6.2.2 Pick & Pack 
+3.6.2.3 Confirm Dispatch 
+59 | Page 
+--- PAGE 60 ---
+3.6.2.4 Receive, Count & Confirm Receipt 
+3.6.2.5 Resolve Transfer Discrepancy 
+60 | Page 
+--- PAGE 61 ---
+3.7 Class Specifications 
+3.7.1 Entity Classes 
+3.7.1.1 Permission 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each permission. 
+02   permissionName   Visibility: Private (-) 
+Type: String 
+Purpose: Unique name of the permission. 
+03   description   Visibility: Private (-) 
+Type: String 
+Purpose: Description of the permission and its purpose. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+Type: int 
+Purpose: Gets the permission ID. 
+02   getPermissionName
+() 
+Visibility: Public (+) 
+Type: String 
+Purpose: Retrieves the unique permission name. 
+3.7.1.2 Role 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+61 | Page 
+--- PAGE 62 ---
+Purpose: Unique identifier for each role. 
+02   roleName   Visibility: Private (-) 
+Type: String 
+Purpose: Unique role name, such as Admin or Manager. 
+03   description   Visibility: Private (-) 
+Type: String 
+Purpose: Description of the role and its responsibilities. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+Type: int 
+Purpose: Gets the role ID. 
+3.7.1.3 RolePermission 
+No   Name   Description 
+Attributes 
+01   roleId   Visibility: Private (-) 
+Type: int 
+Purpose: References the role receiving the permission. 
+02   permissionId   Visibility: Private (-) 
+Type: int 
+Purpose: References the permission assigned to the role. 
+Methods/Operations 
+01   assignPermission()   Visibility: Public (+) 
+Type: void 
+Purpose: Links a specific permission to a role. 
+3.7.1.4 User 
+62 | Page 
+--- PAGE 63 ---
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each user. 
+02   roleId   Visibility: Private (-) 
+Type: int 
+Purpose: References the role assigned to the user. 
+03   userName   Visibility: Private (-) 
+Type: String 
+Purpose: Unique username used for login. 
+04   passwordHash   Visibility: Private (-) 
+Type: String 
+Purpose: Stores the hashed user password. 
+05   fullName   Visibility: Private (-) 
+Type: String 
+Purpose: Full name of the user. 
+06   email   Visibility: Private (-) 
+Type: String 
+Purpose: Unique email address of the user. 
+07   phoneNumber   Visibility: Private (-) 
+Type: String 
+Purpose: User's phone number. 
+08   status   Visibility: Private (-) 
+Type: String 
+Purpose: Current account status, such as Active or Inactive. 
+Methods/Operations 
+63 | Page 
+--- PAGE 64 ---
+01   getId()   Visibility: Public (+) 
+Type: int 
+Purpose: Gets the user ID. 
+02   verifyPassword(inpu
+t: String) 
+Visibility: Public (+) 
+Type: boolean 
+Purpose: Verifies if the provided password matches the
+stored hash. 
+03   setPasswordHash(n
+ewHash: String) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Updates the user's stored password hash after
+successful password validation. 
+3.7.1.5 UserWarehouse 
+No   Name   Description 
+Attributes 
+01   userId   Visibility: Private (-) 
+Type: int 
+Purpose: References an authorized user. 
+02   warehouseId   Visibility: Private (-) 
+Type: int 
+Purpose: References a warehouse accessible to the user. 
+Methods/Operations 
+01   grantAccess()   Visibility: Public (+) 
+Type: void 
+Purpose: Assigns a user to a specific warehouse. 
+3.7.1.6 StorageSectionType 
+64 | Page 
+--- PAGE 65 ---
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each section type. 
+02   typeCode   Visibility: Private (-) 
+Type: String 
+Purpose: Unique code of the storage section type. 
+03   description   Visibility: Private (-) 
+Type: String 
+Purpose: Description of the storage type. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+Type: int 
+Purpose: Gets the section type ID. 
+3.7.1.7 Warehouse 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each warehouse. 
+02   warehouseCode   Visibility: Private (-) 
+Type: String 
+Purpose: Unique business code for the warehouse. 
+03   warehouseName   Visibility: Private (-) 
+Type: String 
+65 | Page 
+--- PAGE 66 ---
+Purpose: Name of the warehouse. 
+04   address   Visibility: Private (-) 
+Type: String 
+Purpose: Physical warehouse address. 
+05   phoneNumber   Visibility: Private (-) 
+Type: String 
+Purpose: Contact phone number of the warehouse. 
+06   managerUserId   Visibility: Private (-) 
+Type: int 
+Purpose: References the user responsible for managing the
+warehouse. 
+07   area   Visibility: Private (-) 
+Type: decimal 
+Purpose: Physical area of the warehouse. 
+08   maxStorageSection   Visibility: Private (-) 
+Type: int 
+Purpose: Maximum number of storage sections allowed. 
+09   maxWeightKg   Visibility: Private (-) 
+Type: decimal 
+Purpose: Maximum total storage weight supported by the
+warehouse. 
+10   status   Visibility: Private (-) 
+Type: String 
+Purpose: Current operational status of the warehouse. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+Type: int 
+66 | Page 
+--- PAGE 67 ---
+Purpose: Gets the warehouse ID. 
+3.7.1.8 StorageSection 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each storage section. 
+02   warehouseId   Visibility: Private (-) 
+Type: int 
+Purpose: References the warehouse containing the section. 
+03   storageSectionTypeI
+d 
+Visibility: Private (-) 
+Type: int 
+Purpose: References the type of the section. 
+04   sectionCode   Visibility: Private (-) 
+Type: String 
+Purpose: Code identifying the section inside the warehouse. 
+05   sectionName   Visibility: Private (-) 
+Type: String 
+Purpose: Display name of the storage section. 
+06   maxRackCount   Visibility: Private (-) 
+Type: int 
+Purpose: Maximum number of racks allowed in the section. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+Type: int 
+Purpose: Retrieves the section ID. 
+67 | Page 
+--- PAGE 68 ---
+3.7.1.9 StorageRack 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each rack. 
+02   sectionId   Visibility: Private (-) 
+Type: int 
+Purpose: References the section containing the rack. 
+03   rackCode   Visibility: Private (-) 
+Type: String 
+Purpose: Rack code within the section. 
+04   maxBinCount   Visibility: Private (-) 
+Type: int 
+Purpose: Maximum number of bins allowed in the rack. 
+05   maxWeightKg   Visibility: Private (-) 
+Type: decimal 
+Purpose: Maximum total weight supported by the rack. 
+06   lengthCm   Visibility: Private (-) 
+Type: decimal 
+Purpose: Physical length of the rack in centimeters. 
+07   widthCm   Visibility: Private (-) 
+Type: decimal 
+Purpose: Physical width of the rack in centimeters. 
+08   heightCm   Visibility: Private (-) 
+68 | Page 
+--- PAGE 69 ---
+Type: decimal 
+Purpose: Physical height of the rack in centimeters. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+Type: int 
+Purpose: Retrieves the rack ID. 
+3.7.1.10 StorageBin 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each storage bin. 
+02   rackId   Visibility: Private (-) 
+Type: int 
+Purpose: References the rack containing the bin. 
+03   binCode   Visibility: Private (-) 
+Type: String 
+Purpose: Code identifying the bin within the rack. 
+04   binName   Visibility: Private (-) 
+Type: String 
+Purpose: Display name of the storage bin. 
+05   maxWeightKg   Visibility: Private (-) 
+Type: decimal 
+Purpose: Maximum weight supported by the bin. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+69 | Page 
+--- PAGE 70 ---
+Type: int 
+Purpose: Retrieves the storage bin ID. 
+3.7.1.11 Supplier 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each supplier. 
+02   supplierCode   Visibility: Private (-) 
+Type: String 
+Purpose: Unique supplier code. 
+03   supplierName   Visibility: Private (-) 
+Type: String 
+Purpose: Name of the supplier. 
+04   contactPerson   Visibility: Private (-) 
+Type: String 
+Purpose: Main contact person of the supplier. 
+05   email   Visibility: Private (-) 
+Type: String 
+Purpose: Supplier email address. 
+06   phoneNumber   Visibility: Private (-) 
+Type: String 
+Purpose: Supplier phone number. 
+07   address   Visibility: Private (-) 
+Type: String 
+70 | Page 
+--- PAGE 71 ---
+Purpose: Supplier address. 
+08   status   Visibility: Private (-) 
+Type: String 
+Purpose: Current supplier status. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+Type: int 
+Purpose: Retrieves the supplier ID. 
+02   getSupplierInfo()   Visibility: Public (+) 
+Type: String 
+Purpose: Returns formatted supplier contact information. 
+3.7.1.12 Category 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each category. 
+02   parentId   Visibility: Private (-) 
+Type: int 
+Purpose: References the parent category for hierarchical
+organization. 
+03   categoryName   Visibility: Private (-) 
+Type: String 
+Purpose: Unique name of the category. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+71 | Page 
+--- PAGE 72 ---
+Type: int 
+Purpose: Retrieves the category ID. 
+02   isRootCategory()   Visibility: Public (+) 
+Type: boolean 
+Purpose: Checks whether the category is a root category by
+determining if its parentId is null. 
+3.7.1.13 Product 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each product. 
+02   categoryId   Visibility: Private (-) 
+Type: int 
+Purpose: References the category of the product. 
+03   productCode   Visibility: Private (-) 
+Type: String 
+Purpose: Unique business code of the product. 
+04   productName   Visibility: Private (-) 
+Type: String 
+Purpose: Product name. 
+05   brand   Visibility: Private (-) 
+Type: String 
+Purpose: Brand of the product. 
+06   model   Visibility: Private (-) 
+Type: String 
+72 | Page 
+--- PAGE 73 ---
+Purpose: Product model. 
+07   status   Visibility: Private (-) 
+Type: String 
+Purpose: Current product status. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+Type: int 
+Purpose: Retrieves the product ID. 
+3.7.1.14 ProductSupplier 
+No   Name   Description 
+Attributes 
+01   productId   Visibility: Private (-) 
+Type: int 
+Purpose: References the product supplied. 
+02   supplierId   Visibility: Private (-) 
+Type: int 
+Purpose: References the supplier. 
+03   supplierSKU   Visibility: Private (-) 
+Type: String 
+Purpose: SKU used by the supplier. 
+04   unitPrice   Visibility: Private (-) 
+Type: decimal 
+Purpose: Supplier's unit price for the product. 
+05   leadTimeDays   Visibility: Private (-) 
+Type: int 
+73 | Page 
+--- PAGE 74 ---
+Purpose: Expected supplier lead time in days. 
+06   isPreferred   Visibility: Private (-) 
+Type: int 
+Purpose: Indicates whether this supplier is preferred for the
+product. 
+Methods/Operations 
+01   getUnitPrice()   Visibility: Public (+) 
+Type: decimal 
+Purpose: Retrieves the unit price from the supplier. 
+3.7.1.15 ProductVariant 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each product variant. 
+02   productId   Visibility: Private (-) 
+Type: int 
+Purpose: References the base product. 
+03   sku   Visibility: Private (-) 
+Type: String 
+Purpose: Unique stock keeping unit of the variant. 
+04   variantName   Visibility: Private (-) 
+Type: String 
+Purpose: Display name of the variant. 
+05   color   Visibility: Private (-) 
+Type: String 
+74 | Page 
+--- PAGE 75 ---
+Purpose: Product color. 
+06   capacity   Visibility: Private (-) 
+Type: String 
+Purpose: Variant capacity or size information. 
+07   weightKg   Visibility: Private (-) 
+Type: decimal 
+Purpose: Weight of one physical unit in kilograms. 
+08   costPrice   Visibility: Private (-) 
+Type: decimal 
+Purpose: Cost price of the product variant. 
+09   sellingPrice   Visibility: Private (-) 
+Type: decimal 
+Purpose: Selling price of the product variant. 
+10   warrantyMonths   Visibility: Private (-) 
+Type: int 
+Purpose: Warranty period in months. 
+11   specs   Visibility: Private (-) 
+Type: String 
+Purpose: Technical specifications of the variant. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+Type: int 
+Purpose: Retrieves the variant ID. 
+3.7.1 .16 InboundRequest 
+75 | Page 
+--- PAGE 76 ---
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each inbound request. 
+02   warehouseId   Visibility: Private (-) 
+Type: int 
+Purpose: References the destination warehouse. 
+03   supplierId   Visibility: Private (-) 
+Type: int 
+Purpose: References the supplier associated with the request. 
+04   requestedByUserId   Visibility: Private (-) 
+Type: int 
+Purpose: References the user who created the request. 
+05   approvedByUserId   Visibility: Private (-) 
+Type: int 
+Purpose: References the user who approved the request. 
+06   supplierCommitment
+Status 
+Visibility: Private (-) 
+Type: String 
+Purpose: Stores the supplier's acceptance or rejection status. 
+07   expectedDeliveryDate   Visibility: Private (-) 
+Type: DateTime 
+Purpose: Expected delivery date confirmed with the supplier. 
+08   rejectionReason   Visibility: Private (-) 
+Type: String 
+Purpose: Reason for rejecting the request, if applicable. 
+76 | Page 
+--- PAGE 77 ---
+09   status   Visibility: Private (-) 
+Type: String 
+Purpose: Current workflow status of the inbound request. 
+10   createdDate   Visibility: Private (-) 
+Type: DateTime 
+Purpose: Date and time when the request was created. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+Type: int 
+Purpose: Retrieves the inbound request ID. 
+02   updateStatus(newSt
+atus: String) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Updates the status of the inbound request. 
+03   recordSupplierCom
+mitment(commitme
+ntStatus: String,
+expectedDate:
+DateTime?) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Records the supplier's acceptance or rejection and
+expected delivery date. 
+04   recordApproval(app
+rovedByUserId: int) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Records the user who approves the inbound request. 
+05   recordRejection(rea
+son: String) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Records the reason for rejecting an inbound request. 
+3.7.1.17 InboundRequestItem 
+No   Name   Description 
+Attributes 
+77 | Page 
+--- PAGE 78 ---
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each inbound request item. 
+02   inboundRequestId   Visibility: Private (-) 
+Type: int 
+Purpose: References the associated inbound request. 
+03   productVariantId   Visibility: Private (-) 
+Type: int 
+Purpose: References the requested product variant. 
+04   expectedQty   Visibility: Private (-) 
+Type: int 
+Purpose: Expected quantity to be received. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+Type: int 
+Purpose: Retrieves the item ID. 
+02   getExpectedQty()   Visibility: Public (+) 
+Type: int 
+Purpose: Retrieves the expected quantity. 
+03   updateConfirmedDetail
+s(productVariantId: int,
+expectedQty: int) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Updates the product variant and confirmed
+quantity based on supplier commitment. 
+3.7.1 .18 GoodsReceipt 
+No   Name   Description 
+Attributes 
+78 | Page 
+--- PAGE 79 ---
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each goods receipt. 
+02   inboundRequestId   Visibility: Private (-) 
+Type: int 
+Purpose: References the related inbound request. 
+03   receivedByUserId   Visibility: Private (-) 
+Type: int 
+Purpose: References the warehouse staff who received the
+goods. 
+04   receivedDate   Visibility: Private (-) 
+Type: DateTime 
+Purpose: Date and time when goods were received. 
+05   status   Visibility: Private (-) 
+Type: String 
+Purpose: Current status of the goods receipt. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+Type: int 
+Purpose: Retrieves the goods receipt ID. 
+02   confirmReceipt()   Visibility: Public (+) 
+Type: void 
+Purpose: Confirms receipt and triggers stock updates. 
+3.7.1. 19 GoodsReceiptItem 
+No   Name   Description 
+Attributes 
+79 | Page 
+--- PAGE 80 ---
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each goods receipt item. 
+02   goodsReceiptId   Visibility: Private (-) 
+Type: int 
+Purpose: References the associated goods receipt. 
+03   productVariantId   Visibility: Private (-) 
+Type: int 
+Purpose: References the received product variant. 
+04   binId   Visibility: Private (-) 
+Type: int 
+Purpose: References the destination storage bin. 
+05   receivedQty   Visibility: Private (-) 
+Type: int 
+Purpose: Actual quantity received. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+Type: int 
+Purpose: Retrieves the item ID. 
+3.7.1. 20 TransferOrder 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+80 | Page 
+--- PAGE 81 ---
+Type: int 
+Purpose: Unique identifier for each transfer order. 
+02   fromWarehouseId   Visibility: Private (-) 
+Type: int 
+Purpose: References the source warehouse. 
+03   toWarehouseId   Visibility: Private (-) 
+Type: int 
+Purpose: References the destination warehouse. 
+04   requestedByUserId   Visibility: Private (-) 
+Type: int 
+Purpose: References the user who created the transfer
+request. 
+05   approvedByUserId   Visibility: Private (-) 
+Type: int 
+Purpose: References the user who approved the transfer. 
+06   destinationStaffUserId   Visibility: Private (-) 
+Type: int 
+Purpose: References the staff responsible for receiving. 
+07   status   Visibility: Private (-) 
+Type: String 
+Purpose: Current transfer order status. 
+08   createdDate   Visibility: Private (-) 
+Type: DateTime 
+Purpose: Date and time when the transfer order was
+created. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+81 | Page 
+--- PAGE 82 ---
+Type: int 
+Purpose: Retrieves the transfer order ID. 
+02   updateStatus(newStat
+us: String) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Updates the transfer status. 
+3.7.1. 21 TransferOrderItem 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each transfer order item. 
+02   transferOrderId   Visibility: Private (-) 
+Type: int 
+Purpose: References the associated transfer order. 
+03   productVariantId   Visibility: Private (-) 
+Type: int 
+Purpose: References the transferred product variant. 
+04   fromBinId   Visibility: Private (-) 
+Type: int 
+Purpose: References the source storage bin. 
+05   toBinId   Visibility: Private (-) 
+Type: int 
+Purpose: References the destination storage bin. 
+06   requestedQty   Visibility: Private (-) 
+Type: int 
+82 | Page 
+--- PAGE 83 ---
+Purpose: Quantity expected to be transferred. 
+07   actualReceivedQty   Visibility: Private (-) 
+Type: int 
+Purpose: Quantity actually received at the destination. 
+08   discrepancyNote   Visibility: Private (-) 
+Type: String 
+Purpose: Notes explaining transfer quantity discrepancies. 
+Methods/Operations 
+01   calculateDiscrepancy()   Visibility: Public (+) 
+Type: int 
+Purpose: Calculates difference between requested and
+received quantity. 
+3.7.1. 22 TransferOrderSerial 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each transfer serial record. 
+02   transferOrderItemId   Visibility: Private (-) 
+Type: int 
+Purpose: References the transfer order item. 
+03   serialNumberId   Visibility: Private (-) 
+Type: int 
+Purpose: References the Serial/IMEI being transferred. 
+04   status   Visibility: Private (-) 
+Type: String 
+83 | Page 
+--- PAGE 84 ---
+Purpose: Current transfer status of the serial unit. 
+05   dispatchedAt   Visibility: Private (-) 
+Type: DateTime 
+Purpose: Time when the serial unit left the source
+location. 
+06   receivedAt   Visibility: Private (-) 
+Type: DateTime 
+Purpose: Time when the serial unit was received at the
+destination. 
+Methods/Operations 
+01   markAsDispatched()   Visibility: Public (+) 
+Type: void 
+Purpose: Records dispatch time and updates status. 
+02   markAsReceived()   Visibility: Public (+) 
+Type: void 
+Purpose: Records receive time and updates status. 
+3.7.1.23 InventorySheet 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each inventory sheet. 
+02   warehouseId   Visibility: Private (-) 
+Type: int 
+Purpose: References the warehouse being counted. 
+03   createdByUserId   Visibility: Private (-) 
+84 | Page 
+--- PAGE 85 ---
+Type: int 
+Purpose: References the user who created the inventory
+sheet. 
+04   approvedByUserId   Visibility: Private (-) 
+Type: int 
+Purpose: References the user who approved the inventory
+results. 
+05   status   Visibility: Private (-) 
+Type: String 
+Purpose: Current status of the inventory sheet. 
+06   rejectionReason   Visibility: Private (-) 
+Type: String 
+Purpose: Reason the inventory sheet was rejected. 
+07   createdDate   Visibility: Private (-) 
+Type: DateTime 
+Purpose: Date and time the sheet was created. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+Type: int 
+Purpose: Retrieves the inventory sheet ID. 
+02   updateStatus(newStat
+us: String) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Updates the status of the sheet. 
+3.7.1.24 InventorySheetItem 
+No   Name   Description 
+Attributes 
+85 | Page 
+--- PAGE 86 ---
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each inventory sheet item. 
+02   inventorySheetId   Visibility: Private (-) 
+Type: int 
+Purpose: References the associated inventory sheet. 
+03   binId   Visibility: Private (-) 
+Type: int 
+Purpose: References the storage bin being counted. 
+04   productVariantId   Visibility: Private (-) 
+Type: int 
+Purpose: References the counted product variant. 
+05   systemQty   Visibility: Private (-) 
+Type: int 
+Purpose: Quantity recorded by the system before physical
+counting. 
+06   actualQty   Visibility: Private (-) 
+Type: int 
+Purpose: Actual physical quantity entered by warehouse
+staff. 
+07   note   Visibility: Private (-) 
+Type: String 
+Purpose: Additional notes about the inventory count. 
+Methods/Operations 
+01   calculateDiscrepancy()   Visibility: Public (+) 
+Type: int 
+Purpose: Calculates variance (ActualQty - SystemQty). 
+86 | Page 
+--- PAGE 87 ---
+3.7.1. 25 InventorySheetTrack 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each recount record. 
+02   inventorySheetItemId   Visibility: Private (-) 
+Type: int 
+Purpose: References the inventory sheet item being
+counted. 
+03   countedByUserId   Visibility: Private (-) 
+Type: int 
+Purpose: References the staff member performing the
+count. 
+04   countedQty   Visibility: Private (-) 
+Type: int 
+Purpose: Quantity recorded during this count. 
+05   note   Visibility: Private (-) 
+Type: String 
+Purpose: Notes recorded during the counting attempt. 
+06   countedAt   Visibility: Private (-) 
+Type: DateTime 
+Purpose: Date and time when the count was performed. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+Type: int 
+87 | Page 
+--- PAGE 88 ---
+Purpose: Retrieves the track record ID. 
+3.7.1.26 InventorySheetSerial 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each serial verification
+record. 
+02   inventorySheetId   Visibility: Private (-) 
+Type: int 
+Purpose: References the inventory sheet. 
+03   serialNumberId   Visibility: Private (-) 
+Type: int 
+Purpose: References the Serial/IMEI being verified. 
+04   expectedBinId   Visibility: Private (-) 
+Type: int 
+Purpose: Bin where the serial is expected to be located. 
+05   scannedBinId   Visibility: Private (-) 
+Type: int 
+Purpose: Bin where the serial was physically scanned. 
+06   isExpected   Visibility: Private (-) 
+Type: boolean 
+Purpose: Indicates whether the serial was expected. 
+07   isScanned   Visibility: Private (-) 
+Type: boolean 
+88 | Page 
+--- PAGE 89 ---
+Purpose: Indicates whether the serial was physically
+scanned. 
+08   resultStatus   Visibility: Private (-) 
+Type: String 
+Purpose: Verification result (MATCHED, MISSING,
+WRONG_BIN, UNEXPECTED). 
+09   countedByUserId   Visibility: Private (-) 
+Type: int 
+Purpose: References the staff member who performed the
+scan. 
+10   scannedAt   Visibility: Private (-) 
+Type: DateTime 
+Purpose: Date and time when the serial was scanned. 
+Methods/Operations 
+01   evaluateResult()   Visibility: Public (+) 
+Type: void 
+Purpose: Determines the inventory verification result
+based on the expected and scanned flags, and compares
+the expected and scanned storage bin IDs when
+applicable. 
+3.7.1. 27 OutboundRequest 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each outbound request. 
+02   warehouseId   Visibility: Private (-) 
+Type: int 
+Purpose: References the source warehouse. 
+89 | Page 
+--- PAGE 90 ---
+03   requestedByUserId   Visibility: Private (-) 
+Type: int 
+Purpose: References the user who created the request. 
+04   approvedByUserId   Visibility: Private (-) 
+Type: int 
+Purpose: References the user who approved the request. 
+05   customerName   Visibility: Private (-) 
+Type: String 
+Purpose: Name of the receiving customer. 
+06   customerEmail   Visibility: Private (-) 
+Type: String 
+Purpose: Customer email address. 
+07   customerPhone   Visibility: Private (-) 
+Type: String 
+Purpose: Customer phone number. 
+08   destinationAddress   Visibility: Private (-) 
+Type: String 
+Purpose: Destination or delivery address. 
+09   reason   Visibility: Private (-) 
+Type: String 
+Purpose: Business reason for the outbound request. 
+10   rejectionReason   Visibility: Private (-) 
+Type: String 
+Purpose: Reason for rejecting the outbound request. 
+11   status   Visibility: Private (-) 
+Type: String 
+Purpose: Current status of the outbound request. 
+12   createdDate   Visibility: Private (-) 
+Type: DateTime 
+90 | Page 
+--- PAGE 91 ---
+Purpose: Date and time when the request was created. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+Type: int 
+Purpose: Retrieves the outbound request ID. 
+02   calculateTotalItems()   Visibility: Public (+) 
+Type: void 
+Purpose: Calculates and returns the total quantity of
+product variants requested in the outbound request. 
+03   updateStatus(newStatus
+: String) 
+Visibility: Public (+) 
+Type: int 
+Purpose: Updates the status of the outbound request according
+to the specified new status. 
+3.7.1. 28 OutboundRequestItem 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each outbound request
+item. 
+02   outboundRequestId   Visibility: Private (-) 
+Type: int 
+Purpose: References the associated outbound request. 
+03   productVariantId   Visibility: Private (-) 
+Type: int 
+Purpose: References the requested product variant. 
+04   requestedQty   Visibility: Private (-) 
+Type: int 
+Purpose: Quantity requested for outbound processing. 
+91 | Page 
+--- PAGE 92 ---
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+Type: int 
+Purpose: Retrieves the item ID. 
+3.7.1.29 DeliveryOrder 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each delivery order. 
+02   outboundRequestId   Visibility: Private (-) 
+Type: int 
+Purpose: References the related outbound request. 
+03   createdByUserId   Visibility: Private (-) 
+Type: int 
+Purpose: References the user who created the delivery
+order. 
+04   deliveryDate   Visibility: Private (-) 
+Type: DateTime 
+Purpose: Date and time when delivery or dispatch
+occurred. 
+05   status   Visibility: Private (-) 
+Type: String 
+Purpose: Current delivery order status. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+Type: int 
+92 | Page 
+--- PAGE 93 ---
+Purpose: Retrieves the delivery order ID. 
+3.7.1.30 DeliveryOrderItem 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each delivery item. 
+02   deliveryOrderId   Visibility: Private (-) 
+Type: int 
+Purpose: References the delivery order. 
+03   productVariantId   Visibility: Private (-) 
+Type: int 
+Purpose: References the dispatched product variant. 
+04   binId   Visibility: Private (-) 
+Type: int 
+Purpose: References the source storage bin. 
+05   dispatchedQty   Visibility: Private (-) 
+Type: int 
+Purpose: Quantity actually dispatched from the
+warehouse. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+Type: int 
+Purpose: Retrieves the item ID. 
+3.7.1.31 Stock 
+No   Name   Description 
+93 | Page 
+--- PAGE 94 ---
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each stock record. 
+02   productVariantId   Visibility: Private (-) 
+Type: int 
+Purpose: References the stored product variant. 
+03   binId   Visibility: Private (-) 
+Type: int 
+Purpose: References the storage bin containing the stock. 
+04   onHandQty   Visibility: Private (-) 
+Type: int 
+Purpose: Physical quantity currently recorded in the bin. 
+05   reservedQty   Visibility: Private (-) 
+Type: int 
+Purpose: Quantity reserved for approved outbound
+operations. 
+Methods/Operations 
+01   getAvailableQty()   Visibility: Public (+) 
+Type: int 
+Purpose: Calculates available quantity (onHandQty -
+reservedQty). 
+02   updateStock(qty: int)   Visibility: Public (+) 
+Type: void 
+Purpose: Modifies the onHandQty based on inventory
+movements. 
+3.7.1.32 SerialNumber 
+94 | Page 
+--- PAGE 95 ---
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each serial record. 
+02   productVariantId   Visibility: Private (-) 
+Type: int 
+Purpose: References the product variant represented by
+the serial. 
+03   originGoodsReceiptIte
+mId 
+Visibility: Private (-) 
+Type: int 
+Purpose: References the goods receipt item where the
+serial originally entered. 
+04   reservedForOutbound
+ItemId 
+Visibility: Private (-) 
+Type: int 
+Purpose: References the outbound request item currently
+reserving the serial. 
+05   currentBinId   Visibility: Private (-) 
+Type: int 
+Purpose: References the current storage bin of the serial
+unit. 
+06   dispatchedInDeliveryIt
+emId 
+Visibility: Private (-) 
+Type: int 
+Purpose: References the delivery item through which the
+serial was dispatched. 
+07   serialCode   Visibility: Private (-) 
+Type: String 
+Purpose: Unique Serial Number or IMEI value. 
+08   currentStatus   Visibility: Private (-) 
+95 | Page 
+--- PAGE 96 ---
+Type: String 
+Purpose: Current lifecycle status. 
+Methods/Operations 
+01   updateStatus(newStat
+us: String) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Updates the lifecycle status of the serial number. 
+02   getHistory()   Visibility: Public (+) 
+Type: Object 
+Purpose: Retrieves movement history for this serial
+number. 
+3.7.1. 33 SerialMovement 
+No   Name   Description 
+Attributes 
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each serial movement
+record. 
+02   serialNumberId   Visibility: Private (-) 
+Type: int 
+Purpose: References the Serial/IMEI being moved. 
+03   fromBinId   Visibility: Private (-) 
+Type: int 
+Purpose: References the previous storage bin, when
+applicable. 
+04   toBinId   Visibility: Private (-) 
+Type: int 
+Purpose: References the destination storage bin, when 
+96 | Page 
+--- PAGE 97 ---
+applicable. 
+05   performedByUserId   Visibility: Private (-) 
+Type: int 
+Purpose: References the user responsible for the
+movement. 
+06   movementType   Visibility: Private (-) 
+Type: String 
+Purpose: Type of movement (receipt, transfer, adjustment,
+dispatch). 
+07   refType   Visibility: Private (-) 
+Type: String 
+Purpose: Identifies the business transaction type related
+to the movement. 
+08   refId   Visibility: Private (-) 
+Type: int 
+Purpose: Stores the identifier of the related business
+transaction. 
+09   movementDate   Visibility: Private (-) 
+Type: DateTime 
+Purpose: Date and time when the movement occurred. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+Type: int 
+Purpose: Retrieves the movement record ID. 
+3.7.1. 34 AuditLog 
+No   Name   Description 
+Attributes 
+97 | Page 
+--- PAGE 98 ---
+01   id   Visibility: Private (-) 
+Type: int 
+Purpose: Unique identifier for each audit log record. 
+02   userId   Visibility: Private (-) 
+Type: int 
+Purpose: References the user who performed the action. 
+03   action   Visibility: Private (-) 
+Type: String 
+Purpose: Name or type of action performed. 
+04   entityName   Visibility: Private (-) 
+Type: String 
+Purpose: Name of the affected entity or table. 
+05   entityId   Visibility: Private (-) 
+Type: int 
+Purpose: Identifier of the affected record. 
+06   oldValue   Visibility: Private (-) 
+Type: String 
+Purpose: Previous data before the change. 
+07   newValue   Visibility: Private (-) 
+Type: String 
+Purpose: New data after the change. 
+08   createdAt   Visibility: Private (-) 
+Type: DateTime 
+Purpose: Date and time when the action was logged. 
+Methods/Operations 
+01   getId()   Visibility: Public (+) 
+98 | Page 
+--- PAGE 99 ---
+Type: int 
+Purpose: Retrieves the audit log ID. 
+3.7.2 Controller Classes 
+3.7.2.1 AuthController 
+No   Name   Description 
+Methods/Operations 
+01   login(request:
+LoginRequest) 
+Visibility: Public (+) 
+Type: AuthResponse 
+Purpose: Receives login credentials from LoginPage,
+authenticates via AuthService, and returns a JWT token on
+success. 
+02   logout()   Visibility: Public (+) 
+Type: void 
+Purpose: Handles the logout request by invoking
+AuthService to perform the configured server-side logout
+operations. The frontend is responsible for clearing locally
+stored authentication tokens. 
+03   changePassword(requ
+est:
+ChangePasswordRequ
+est) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Receives the password change request and
+delegates processing to AuthService. 
+3.7.2.2 InboundController 
+No   Name   Description 
+Methods/Operations 
+01   createRequest(data:
+Object) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Receives warehouse, product, and quantity data
+to initiate a new InboundRequest via InboundService. 
+02   updateRequest(id: int,
+data: Object) 
+Visibility: Public (+) 
+99 | Page 
+--- PAGE 100 ---
+Type: void 
+Purpose: Receive supplier commitment updates for an
+existing inbound request and delegates processing to
+InboundService. 
+03   getRequestList()   Visibility: Public (+) 
+Type: List<InboundRequest> 
+Purpose: Retrieves the list of inbound requests through
+InboundService. 
+04   getRequestDetail(id:
+int) 
+Visibility: Public (+) 
+Type: InboundRequest 
+Purpose: Retrieves the details of a specific inbound
+request by its identifier. 
+05   approveRequest(id:
+int) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Handles an inbound request approval initiated
+by an authorized Manager. 
+06   rejectRequest(id: int,
+reason: String) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Handles an inbound request rejection with a
+specified reason and delegates processing to
+InboundService. 
+3.7.2.3 GoodsReceiptController 
+No   Name   Description 
+Methods/Operations 
+01   createReceipt(data:
+Object) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Initiates the physical receiving process for an
+inbound request. 
+02   confirmReceipt()   Visibility: Public (+) 
+Type: void 
+100 | Page 
+--- PAGE 101 ---
+Purpose: Finalizes the receipt, triggering stock updates via
+GoodsReceiptService. 
+03   getReceiptDetail(id:
+int) 
+Visibility: Public (+) 
+Type: GoodsReceipt 
+Purpose: Retrieves the details of a specific goods receipt. 
+3.7.2.4 OutboundController 
+No   Name   Description 
+Methods/Operations 
+01   createRequest(data:
+Object) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Receives request to create an outbound order,
+triggering stock availability checks via OutboundService. 
+02   getRequestDetail(id:
+int) 
+Visibility: Public (+) 
+Type: OutboundRequest 
+Purpose: Retrieves details of a specific outbound request. 
+03   approveRequest(id:
+int) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Handles the approval of an outbound request by
+a manager. 
+04   rejectRequest(id: int)   Visibility: Public (+) 
+Type: void 
+Purpose: Handles the rejection of an outbound request. 
+3.7.2.5 DeliveryController 
+No   Name   Description 
+Methods/Operations 
+01   createDeliveryOrder()   Visibility: Public (+) 
+Type: void 
+101 | Page 
+--- PAGE 102 ---
+Purpose: Initiates a delivery order based on an approved
+outbound request. 
+02   confirmDispatch()   Visibility: Public (+) 
+Type: void 
+Purpose: Confirms that goods have left the warehouse,
+triggering final stock deductions via DeliveryService. 
+3.7.3 Service Classes 
+3.7.3.1 AuthService 
+No   Name   Description 
+Methods/Operations 
+01   authenticate(usernam
+e: string, password:
+string) 
+Visibility: Public (+) 
+Type: User 
+Purpose: Orchestrates the login process by finding the
+user, verifying the password, and checking account status. 
+02   verifyPassword(passw
+ord: string, hash:
+string) 
+Visibility: Public (+) 
+Type: boolean 
+Purpose: Compares the provided password against the
+stored database hash. 
+03   checkAccountStatus(u
+ser: User) 
+Visibility: Public (+) 
+Type: boolean 
+Purpose: Ensures the user account is active and not locked
+before allowing login. 
+04   endSession()   Visibility: Public (+) 
+Type: void 
+Purpose: Handles backend session termination logic
+during logout. 
+05   changePassword(userI
+d: int, request:
+ChangePasswordRequ
+est) 
+Visibility: Public (+) 
+Type: void 
+102 | Page 
+--- PAGE 103 ---
+Purpose: Validates the current password, new password,
+and confirmation password, then updates the user's
+password through UserRepository. 
+06   hashPassword(newPas
+sword: String) 
+Visibility: Public (+) 
+Type: String 
+Purpose: Generates a secure hash of the new password
+before storing it in the database. 
+3.7.3.2 TokenService 
+No   Name   Description 
+Methods/Operations 
+01   generateToken(user:
+User) 
+Visibility: Public (+) 
+Type: string 
+Purpose: Creates a JSON Web Token (JWT) containing user
+roles and permissions. 
+02   validateToken(token:
+string) 
+Visibility: Public (+) 
+Type: boolean 
+Purpose: Checks if a provided JWT is valid and unexpired. 
+3.7.3.3 InboundService 
+No   Name   Description 
+Methods/Operations 
+01   createInboundRequest
+(data: Object) 
+Visibility: Public (+) 
+Type: InboundRequest 
+Purpose: Validates request data and creates
+InboundRequest and InboundRequestItem records in the
+database. 
+02   updateSupplierCommi
+tment(id: int, data:
+Object) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Updates supplier commitment information,
+including acceptance status, expected delivery date, and
+confirmed item details. 
+103 | Page 
+--- PAGE 104 ---
+03   updateRequestStatus(
+) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Changes the workflow status of the inbound
+request. 
+04   validateRequest(data:
+Object) 
+Visibility: Private (-) 
+Type: boolean 
+Purpose: Validates the inbound request data before
+creating the request. 
+05   getInboundRequests()   Visibility: Public (+) 
+Type: List<InboundRequest> 
+Purpose: Retrieves the list of inbound requests through
+InboundRepository. 
+06   getInboundRequestDe
+tail(id: int) 
+Visibility: Public (+) 
+Type: InboundRequest 
+Purpose: Retrieves an inbound request and its related
+information using the specified identifier. 
+07   validateSupplierComm
+itment(data: Object) 
+Visibility: Public (+) 
+Type: boolean 
+Purpose: Validates supplier commitment status,
+confirmed item details, and expected delivery date. 
+08   approveInboundRequ
+est(id: int,
+approvedByUserId:
+int) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Checks whether an inbound request is eligible
+for approval and coordinates the approval process. 
+09   rejectInboundRequest
+(id: int, reason: String) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Checks the rejection conditions and coordinates
+the rejection process. 
+10   isEligibleForDecision(r
+equest:
+InboundRequest) 
+Visibility: Private (-) 
+Type: boolean 
+104 | Page 
+--- PAGE 105 ---
+Purpose: Determines whether the current status of an
+inbound request permits an approval or rejection
+decision. 
+11   validateRejectionReas
+on(reason: String) 
+Visibility: Private (-) 
+Type: boolean 
+Purpose: Checks whether the provided rejection reason
+satisfies the validation requirements. 
+3.7.3.4 GoodsReceiptService 
+No   Name   Description 
+Methods/Operations 
+01   createGoodsReceipt()   Visibility: Public (+) 
+Type: GoodsReceipt 
+Purpose: Creates a receipt record when physical goods
+arrive. 
+02   validateReceivedQuan
+tity() 
+Visibility: Public (+) 
+Type: boolean 
+Purpose: Compares scanned quantities against expected
+quantities. 
+03   validateSkuAndSerial()   Visibility: Public (+) 
+Type: boolean 
+Purpose: Validates that scanned SKUs match the expected
+product variants and verifies the associated Serial/IMEI
+information during the goods receipt process. 
+04   confirmReceipt()   Visibility: Public (+) 
+Type: void 
+Purpose: Finalizes the receipt process, registers new
+serials, and updates stock balances. 
+3.7.3.5 OutboundService 
+No   Name   Description 
+Methods/Operations 
+01   createOutboundRequ
+est(data: Object) 
+Visibility: Public (+) 
+105 | Page 
+--- PAGE 106 ---
+Type: OutboundRequest 
+Purpose: Validates data, verifies stock availability,
+validates scanned serials, and creates request records. 
+02   validateAvailableStock
+() 
+Visibility: Public (+) 
+Type: boolean 
+Purpose: Checks if sufficient inventory exists to fulfill the
+request. 
+03   approveRequest()   Visibility: Public (+) 
+Type: void 
+Purpose: Changes request status to approved and triggers
+stock reservation. 
+04   rejectRequest()   Visibility: Public (+) 
+Type: void 
+Purpose: Rejects an outbound request and releases any
+associated stock reservations when applicable. 
+3.7.3.6 DeliveryService 
+No   Name   Description 
+Methods/Operations 
+01   createDeliveryOrder()   Visibility: Public (+) 
+Type: DeliveryOrder 
+Purpose: Generates dispatch documentation for approved
+outbound requests. 
+02   confirmDispatch()   Visibility: Public (+) 
+Type: void 
+Purpose: Executes final dispatch, calling InventoryService
+to deduct stock and SerialService to mark items as
+dispatched. 
+106 | Page 
+--- PAGE 107 ---
+3.7.3.7 InventoryService 
+No   Name   Description 
+Methods/Operations 
+01   getAvailableQty(items:
+Object) 
+Visibility: Public (+) 
+Type: int 
+Purpose: Calculates (OnHandQty - ReservedQty) for
+requested items during outbound creation. 
+02   reserveStock()   Visibility: Public (+) 
+Type: void 
+Purpose: Increases ReservedQty when an outbound
+request is approved. 
+03   deductStock()   Visibility: Public (+) 
+Type: void 
+Purpose: Decreases OnHandQty and ReservedQty when
+goods are finally dispatched. 
+04   increaseStock(product
+VariantId: int, binId:
+int, qty: int) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Increases OnHandQty when goods are received
+(called by GoodsReceiptService). 
+05   updateRemainingQua
+ntity(inboundRequestI
+d: int) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Determines the remaining quantity for an
+inbound request by comparing the expected quantity with
+the quantities already received. 
+06   checkFullyReceived(in
+boundRequestId: int) 
+Visibility: Public (+) 
+Type: boolean 
+107 | Page 
+--- PAGE 108 ---
+Purpose: Checks whether all expected quantities in the
+specified inbound request have been fully received. 
+3.7.3.8 SerialService 
+No   Name   Description 
+Methods/Operations 
+01   validateSerial(serialCo
+de: string) 
+Visibility: Public (+) 
+Type: boolean 
+Purpose: Checks if a scanned serial is valid and currently
+'In Stock' before outbound processing. 
+02   reserveSerial()   Visibility: Public (+) 
+Type: void 
+Purpose: Updates the Serial/IMEI status to RESERVED
+when the serial unit is allocated to an outbound request. 
+03   releaseSerial()   Visibility: Public (+) 
+Type: void 
+Purpose: Releases a reserved Serial/IMEI and restores its
+status to IN_STOCK when the associated reservation is
+cancelled or released. 
+04   markDispatched()   Visibility: Public (+) 
+Type: void 
+Purpose: Updates the Serial/IMEI status to DISPATCHED
+after the outbound dispatch is successfully confirmed. 
+05   checkDuplicateSerial(s
+erialCode: string) 
+Visibility: Public (+) 
+Type: boolean 
+Purpose: Checks whether the specified Serial/IMEI code
+already exists in the system to support duplicate
+prevention during goods receipt. 
+06   registerSerial()   Visibility: Public (+) 
+Type: void 
+108 | Page 
+--- PAGE 109 ---
+Purpose: Creates a new SerialNumber record when goods
+are received. 
+07   updateSerialStatus()   Visibility: Public (+) 
+Type: void 
+Purpose: General method to change the lifecycle status of
+a serial unit. 
+3.7.4 Repository Classes 
+3.7.4.1 InboundRepository 
+No   Name   Description 
+Methods/Operations 
+01   getAll()   Visibility: Public (+) 
+Type: List<InboundRequest> 
+Purpose: Retrieves all inbound requests from the
+database. 
+02   getById(id: int)   Visibility: Public (+) 
+Type: InboundRequest 
+Purpose: Retrieves an inbound request by its identifier. 
+03   saveWithItems(reques
+t: InboundRequest,
+items:
+List<InboundRequestIt
+em>) 
+Visibility: Public (+) 
+Type: InboundRequest 
+Purpose: Persists an inbound request and its associated
+items in a single database transaction. 
+04   saveCommitment(id:
+int, data: Object) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Persists supplier commitment information and
+related inbound request item updates. 
+05   saveApproval(id: int,
+managerId: int) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Persists an inbound request approval decision
+and the approving Manager's identifier. 
+06   saveRejection(id: int,
+reason: String) 
+Visibility: Public (+) 
+109 | Page 
+--- PAGE 110 ---
+Type: void 
+Purpose: Persists the rejection reason and rejected status
+of an inbound request. 
+3.7.4.2 UserRepository 
+No   Name   Description 
+Methods/Operations 
+01   findByUsername(user
+name: String) 
+Visibility: Public (+) 
+Type: User 
+Purpose: Retrieves a user account by username for
+authentication. 
+02   getById(id: int)   Visibility: Public (+) 
+Type: User 
+Purpose: Retrieves a user account by its identifier. 
+03   updatePasswordHash(
+userId: int, newHash:
+String) 
+Visibility: Public (+) 
+Type: void 
+Purpose: Persists the updated password hash of the
+specified user account. 
+3.8 State machine diagram 
+Develop a state chart diagram for at least one business object that exhibits state-dependent behavior. 
+Please note that the state chart must be implemented and demonstrated as part of your demo. 
+110 | Page 
+--- PAGE 111 ---
+The Inventory Sheet State Machine Diagram describes the lifecycle of an inventory counting sheet in
+the EWMS. After an Inventory Sheet is created, Warehouse Staff perform the physical counting
+process. When all quantities are valid, the sheet is submitted and its status changes to   Pending
+Approval . The Manager can approve or reject the sheet. If approved, the system adjusts the stock
+and the sheet moves to the   Approved   state. If rejected, Warehouse Staff can perform a recount and
+return the sheet to the   Created / Counting   state. The sheet can also be cancelled before submission,
+which moves it to the   Cancelled   state. 
+111 | Page 
+--- PAGE 112 ---
+Transition   Event/ Condition   Result 
+Created / Counting   →   Pending
+Approval 
+Submit Inventory Count   [all
+quantities   valid] 
+Wait for Manager review 
+Created / Counting   →   Cancelled   Cancel   End process 
+Pending Approval   →   Approved   Approve / Adjust Stock   Stock is updated 
+Pending Approval   →   Rejected   Reject   Sheet is rejected 
+Rejected   →   Created / Counting   Recount   Staff counts again 
+112 | Page 

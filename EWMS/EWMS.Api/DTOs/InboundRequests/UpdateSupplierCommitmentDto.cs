@@ -1,5 +1,4 @@
 ﻿
-using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace EWMS.Api.DTOs.InboundRequests
@@ -14,5 +13,16 @@ namespace EWMS.Api.DTOs.InboundRequests
         public string CommitmentStatus { get; set; } = string.Empty;
 
         public DateTime? ExpectedDeliveryDate { get; set; }
+
+        public List<ConfirmedInboundItemDto> Items { get; set; } = new();
+
+        public string? ExpectedRevision { get; set; }
+    }
+
+    public class ConfirmedInboundItemDto
+    {
+        public int ItemId { get; set; }
+        public int ProductVariantId { get; set; }
+        public int ExpectedQty { get; set; }
     }
 }

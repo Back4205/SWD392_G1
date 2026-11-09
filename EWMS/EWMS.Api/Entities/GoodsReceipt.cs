@@ -3,6 +3,16 @@ namespace EWMS.Api.Entities
 {
     public class GoodsReceipt
     {
+        public void UpdateStatus(string status)
+        {
+            bool allowed = (Status == "Draft" && status == "PendingApproval")
+                || (Status == "PendingApproval" && (status == "Approved" || status == "Rejected"));
+            if (!allowed) throw new InvalidOperationException($"Cannot change receipt from {Status} to {status}.");
+            Status = status;
+        }
+
+        public void Confirm() => UpdateStatus("PendingApproval");
+
         public int Id { get; set; }
 
         public int InboundRequestId { get; set; }
@@ -18,6 +28,15 @@ namespace EWMS.Api.Entities
         public DateTime? ApprovalDate { get; set; }
 
         public string? RejectionReason { get; set; }
+
+        public string? ApprovalNote { get; set; }
+
+        // SQL tự tạo Version mới khi phiếu thay đổi, giúp phát hiện người dùng đang sửa bản cũ.
+        public byte[] Version { get; set; } = Array.Empty<byte>();
+
+        public DateTime UpdatedAt { get; set; }
+
+        public List<GoodsReceiptItem> Items { get; set; } = new List<GoodsReceiptItem>();
 
         public InboundRequest InboundRequest { get; set; } = null!;
 

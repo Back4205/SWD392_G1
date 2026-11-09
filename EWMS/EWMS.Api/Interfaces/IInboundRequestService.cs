@@ -4,6 +4,10 @@ namespace EWMS.Api.Interfaces
 {
     public interface IInboundRequestService
     {
+        Task<List<int>> GetAssignedWarehouseIdsAsync(int userId);
+        Task<bool> CanUseWarehouseAsync(int userId, int warehouseId);
+        Task<InboundLookupDto> GetLookupsAsync(int userId);
+
         // Task 1: Create Inbound Request
         Task<int> CreateAsync(
             CreateInboundRequestDto dto,

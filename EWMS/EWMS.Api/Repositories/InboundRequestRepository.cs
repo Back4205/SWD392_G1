@@ -1,42 +1,56 @@
 ﻿
 using EWMS.Api.Data;
 using EWMS.Api.Entities;
+using EWMS.Api.DTOs.InboundRequests;
 using EWMS.Api.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace EWMS.Api.Repositories
 {
-    public class InboundRequestRepository : IInboundRequestRepository
+    public class InboundRequestRepository : GenericRepository<InboundRequest>, IInboundRequestRepository
     {
         private readonly EWMSDbContext _context;
 
-        public InboundRequestRepository(EWMSDbContext context)
+        public InboundRequestRepository(EWMSDbContext context) : base(context)
         {
             _context = context;
         }
 
-        // Task 1: Check Warehouse
-        public async Task<bool> WarehouseExistsAsync(int warehouseId)
-        {
-            return await _context.Warehouses
-                .AnyAsync(w => w.Id == warehouseId);
-        }
+        public Task<List<int>> GetAssignedWarehouseIdsAsync(int userId) =>
+            _context.UserWarehouses.Where(x => x.UserId == userId).Select(x => x.WarehouseId).ToListAsync();
 
-        // Task 1: Check Product Variant
-        public async Task<bool> ProductVariantExistsAsync(int productVariantId)
-        {
-            return await _context.ProductVariants
-                .AnyAsync(p => p.Id == productVariantId);
-        }
+        public Task<bool> IsAssignedToWarehouseAsync(int userId, int warehouseId) =>
+            _context.UserWarehouses.AnyAsync(x => x.UserId == userId && x.WarehouseId == warehouseId);
 
-        // Task 1: Check User
-        public async Task<bool> UserExistsAsync(int userId)
+        public async Task<InboundLookupDto> GetLookupsAsync(int userId)
         {
-            return await _context.Users
-                .AnyAsync(u => u.Id == userId);
+            var warehouseIds = await GetAssignedWarehouseIdsAsync(userId);
+            var products = await _context.ProductVariants.AsNoTracking()
+                .Where(x => x.Product != null && x.Product.Status == "Active" && x.WeightKg > 0)
+                .OrderBy(x => x.SKU)
+                .Select(x => new InboundProductLookupDto
+                {
+                    Id = x.Id, SKU = x.SKU, ProductName = x.Product!.ProductName
+                }).ToListAsync();
+            return new InboundLookupDto
+            {
+                Warehouses = await _context.Warehouses.AsNoTracking()
+                    .Where(x => warehouseIds.Contains(x.Id) && x.Status == "Active")
+                    .OrderBy(x => x.WarehouseName)
+                    .Select(x => new InboundWarehouseLookupDto { Id = x.Id, WarehouseName = x.WarehouseName }).ToListAsync(),
+                Suppliers = await _context.Suppliers.AsNoTracking().Where(x => x.Status == "Active")
+                    .OrderBy(x => x.SupplierName)
+                    .Select(x => new InboundSupplierLookupDto { Id = x.Id, SupplierName = x.SupplierName }).ToListAsync(),
+                ProductVariants = products.Where(x => !string.IsNullOrWhiteSpace(x.SKU)).ToList(),
+                WarehouseStaff = await _context.UserWarehouses.AsNoTracking()
+                    .Where(x => warehouseIds.Contains(x.WarehouseId) && x.Warehouse.Status == "Active"
+                        && x.User.Status == "Active" && x.User.Role.RoleName == "Warehouse Staff")
+                    .OrderBy(x => x.User.FullName)
+                    .Select(x => new InboundStaffLookupDto
+                    {
+                        UserId = x.UserId, FullName = x.User.FullName, WarehouseId = x.WarehouseId
+                    }).ToListAsync()
+            };
         }
 
         // Task 1: Create Inbound Request
@@ -72,7 +86,7 @@ namespace EWMS.Api.Repositories
         }
 
         // Task 2: Get Inbound Request List
-        public async Task<List<InboundRequest>> GetAllAsync()
+        public override async Task<List<InboundRequest>> GetAllAsync()
         {
             return await _context.InboundRequests
                 .AsNoTracking()
@@ -82,7 +96,7 @@ namespace EWMS.Api.Repositories
         }
 
         // Task 3: Get Inbound Request by ID
-        public async Task<InboundRequest?> GetByIdAsync(int id)
+        public override async Task<InboundRequest?> GetByIdAsync(int id)
         {
             return await _context.InboundRequests
                 .AsNoTracking()
@@ -100,18 +114,58 @@ namespace EWMS.Api.Repositories
                 .ToListAsync();
         }
 
-        // Task 4: Update Inbound Request
-        public async Task UpdateAsync(InboundRequest request)
+        public Task<InboundRequest?> GetForUpdateAsync(int id) =>
+            _context.InboundRequests.SingleOrDefaultAsync(x => x.Id == id);
+
+        public Task<List<InboundRequestItem>> LoadItemsAsync(int requestId, bool tracking)
         {
-            _context.InboundRequests.Update(request);
+            var query = _context.InboundRequestItems.Where(x => x.InboundRequestId == requestId);
+            if (!tracking) query = query.AsNoTracking();
+            return query.Include(x => x.ProductVariant).ThenInclude(x => x.Product)
+                .OrderBy(x => x.Id).ToListAsync();
+        }
+
+        public Task<string?> GetUserNameAsync(int userId) => _context.Users
+            .Where(x => x.Id == userId).Select(x => (string?)x.FullName).SingleOrDefaultAsync();
+
+        public Task<bool> HasGoodsReceiptsAsync(int requestId) =>
+            _context.GoodsReceipts.AnyAsync(x => x.InboundRequestId == requestId);
+
+        public Task<bool> IsActiveWarehouseAsync(int warehouseId) =>
+            _context.Warehouses.AnyAsync(x => x.Id == warehouseId && x.Status == "Active");
+
+        public Task<bool> IsActiveSupplierAsync(int supplierId) =>
+            _context.Suppliers.AnyAsync(x => x.Id == supplierId && x.Status == "Active");
+
+        public Task<ProductVariant?> GetProductVariantAsync(int variantId) =>
+            _context.ProductVariants.AsNoTracking().Include(x => x.Product).SingleOrDefaultAsync(x => x.Id == variantId);
+
+        public Task<bool> IsActiveAssignedUserAsync(int userId, int warehouseId, string role) =>
+            _context.UserWarehouses.AnyAsync(x => x.UserId == userId && x.WarehouseId == warehouseId
+                && x.User.Status == "Active" && x.User.Role.RoleName == role);
+
+        // SD04: the repository records the commitment and all confirmed lines together.
+        // The service owns the surrounding transaction; these methods never commit it.
+        public async Task SaveCommitmentAsync(InboundRequest request, int supplierId, string status,
+            DateTime? expectedDate, IReadOnlyList<(InboundRequestItem Item, int VariantId, int Quantity)> items)
+        {
+            request.SupplierId = supplierId;
+            request.RecordSupplierCommitment(status, expectedDate);
+            foreach (var confirmed in items)
+                confirmed.Item.UpdateConfirmedDetails(confirmed.VariantId, confirmed.Quantity);
             await _context.SaveChangesAsync();
         }
 
-        // Task 4: Check if Supplier exists
-        public async Task<bool> SupplierExistsAsync(int supplierId)
+        public async Task SaveApprovalAsync(InboundRequest request, int managerUserId)
         {
-            return await _context.Suppliers
-                .AnyAsync(s => s.Id == supplierId);
+            request.RecordApproval(managerUserId);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task SaveRejectionAsync(InboundRequest request, string reason, int managerUserId)
+        {
+            request.RecordRejection(reason, managerUserId);
+            await _context.SaveChangesAsync();
         }
 
         // Task 6: Get Goods Receipts belonging to an Inbound Request

@@ -22,6 +22,69 @@ namespace EWMS.Api.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("EWMS.Api.Entities.AuditLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("EntityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EntityName")
+                        .IsRequired()
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("NewValue")
+                        .HasColumnType("text");
+
+                    b.Property<string>("OldValue")
+                        .HasColumnType("text");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AuditLog", (string)null);
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.AuthSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "ExpiresAt");
+
+                    b.ToTable("AuthSession", (string)null);
+                });
+
             modelBuilder.Entity("EWMS.Api.Entities.Category", b =>
                 {
                     b.Property<int>("Id")
@@ -32,7 +95,7 @@ namespace EWMS.Api.Migrations
 
                     b.Property<string>("CategoryName")
                         .IsRequired()
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int?>("ParentId")
                         .HasColumnType("int");
@@ -47,6 +110,67 @@ namespace EWMS.Api.Migrations
                     b.ToTable("Category", (string)null);
                 });
 
+            modelBuilder.Entity("EWMS.Api.Entities.DeliveryOrder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeliveryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("OutboundRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("varchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("OutboundRequestId");
+
+                    b.ToTable("DeliveryOrder", (string)null);
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.DeliveryOrderItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BinId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DeliveryOrderId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DispatchedQty")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductVariantId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BinId");
+
+                    b.HasIndex("DeliveryOrderId");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.ToTable("DeliveryOrderItem", (string)null);
+                });
+
             modelBuilder.Entity("EWMS.Api.Entities.GoodsReceipt", b =>
                 {
                     b.Property<int>("Id")
@@ -57,6 +181,9 @@ namespace EWMS.Api.Migrations
 
                     b.Property<DateTime?>("ApprovalDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("ApprovalNote")
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<int?>("ApprovedByUserId")
                         .HasColumnType("int");
@@ -71,11 +198,20 @@ namespace EWMS.Api.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("RejectionReason")
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("varchar(30)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.HasKey("Id");
 
@@ -96,7 +232,7 @@ namespace EWMS.Api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("BinId")
+                    b.Property<int?>("BinId")
                         .HasColumnType("int");
 
                     b.Property<int>("GoodsReceiptId")
@@ -119,6 +255,70 @@ namespace EWMS.Api.Migrations
                     b.ToTable("GoodsReceiptItem", (string)null);
                 });
 
+            modelBuilder.Entity("EWMS.Api.Entities.GoodsReceiptSerial", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("GoodsReceiptId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GoodsReceiptItemId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ScannedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ScannedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SerialCode")
+                        .IsRequired()
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ScannedByUserId");
+
+                    b.HasIndex("GoodsReceiptId", "SerialCode")
+                        .IsUnique();
+
+                    b.HasIndex("GoodsReceiptItemId", "GoodsReceiptId");
+
+                    b.ToTable("GoodsReceiptSerial", (string)null);
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.InboundExpectedSerial", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("InboundRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("InboundRequestItemId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SerialCode")
+                        .IsRequired()
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InboundRequestId", "SerialCode")
+                        .IsUnique();
+
+                    b.HasIndex("InboundRequestItemId", "InboundRequestId");
+
+                    b.ToTable("InboundExpectedSerial", (string)null);
+                });
+
             modelBuilder.Entity("EWMS.Api.Entities.InboundRequest", b =>
                 {
                     b.Property<int>("Id")
@@ -127,17 +327,29 @@ namespace EWMS.Api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("ApprovalNote")
+                        .HasColumnType("nvarchar(255)");
+
                     b.Property<int?>("ApprovedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("AssignedStaffUserId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DecisionDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime?>("ExpectedDeliveryDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("HasSupplierManifest")
+                        .HasColumnType("bit");
+
                     b.Property<string>("RejectionReason")
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<int>("RequestedByUserId")
                         .HasColumnType("int");
@@ -158,6 +370,8 @@ namespace EWMS.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ApprovedByUserId");
+
+                    b.HasIndex("AssignedStaffUserId");
 
                     b.HasIndex("RequestedByUserId");
 
@@ -194,6 +408,243 @@ namespace EWMS.Api.Migrations
                     b.ToTable("InboundRequestItem", (string)null);
                 });
 
+            modelBuilder.Entity("EWMS.Api.Entities.InventorySheet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ApprovedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<int>("WarehouseId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApprovedByUserId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.ToTable("InventorySheet", (string)null);
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.InventorySheetItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ActualQty")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BinId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("InventorySheetId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("ProductVariantId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SystemQty")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BinId");
+
+                    b.HasIndex("InventorySheetId");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.ToTable("InventorySheetItem", (string)null);
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.InventorySheetSerial", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CountedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ExpectedBinId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("InventorySheetId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsExpected")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsScanned")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ResultStatus")
+                        .IsRequired()
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<DateTime?>("ScannedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ScannedBinId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SerialNumberId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CountedByUserId");
+
+                    b.HasIndex("ExpectedBinId");
+
+                    b.HasIndex("InventorySheetId");
+
+                    b.HasIndex("ScannedBinId");
+
+                    b.HasIndex("SerialNumberId");
+
+                    b.ToTable("InventorySheetSerial", (string)null);
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.InventorySheetTrack", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CountedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CountedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CountedQty")
+                        .HasColumnType("int");
+
+                    b.Property<int>("InventorySheetItemId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CountedByUserId");
+
+                    b.HasIndex("InventorySheetItemId");
+
+                    b.ToTable("InventorySheetTrack", (string)null);
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.OutboundRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ApprovedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CustomerEmail")
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("CustomerName")
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("CustomerPhone")
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("DestinationAddress")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("RequestedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<int>("WarehouseId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApprovedByUserId");
+
+                    b.HasIndex("RequestedByUserId");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.ToTable("OutboundRequest", (string)null);
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.OutboundRequestItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("OutboundRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductVariantId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RequestedQty")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OutboundRequestId");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.ToTable("OutboundRequestItem", (string)null);
+                });
+
             modelBuilder.Entity("EWMS.Api.Entities.Permission", b =>
                 {
                     b.Property<int>("Id")
@@ -203,7 +654,7 @@ namespace EWMS.Api.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("PermissionName")
                         .IsRequired()
@@ -242,7 +693,7 @@ namespace EWMS.Api.Migrations
 
                     b.Property<string>("ProductName")
                         .IsRequired()
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -313,10 +764,10 @@ namespace EWMS.Api.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Specs")
-                        .HasColumnType("varchar(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("VariantName")
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int?>("WarrantyMonths")
                         .HasColumnType("int");
@@ -343,7 +794,7 @@ namespace EWMS.Api.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("RoleName")
                         .IsRequired()
@@ -370,6 +821,52 @@ namespace EWMS.Api.Migrations
                     b.HasIndex("PermissionId");
 
                     b.ToTable("RolePermission", (string)null);
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.SerialMovement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("FromBinId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("MovementDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MovementType")
+                        .IsRequired()
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<int>("PerformedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RefId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RefType")
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<int>("SerialNumberId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ToBinId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FromBinId");
+
+                    b.HasIndex("PerformedByUserId");
+
+                    b.HasIndex("SerialNumberId");
+
+                    b.HasIndex("ToBinId");
+
+                    b.ToTable("SerialMovement", (string)null);
                 });
 
             modelBuilder.Entity("EWMS.Api.Entities.SerialNumber", b =>
@@ -407,9 +904,13 @@ namespace EWMS.Api.Migrations
 
                     b.HasIndex("CurrentBinId");
 
+                    b.HasIndex("DispatchedInDeliveryItemId");
+
                     b.HasIndex("OriginGoodsReceiptItemId");
 
                     b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("ReservedForOutboundItemId");
 
                     b.HasIndex("SerialCode")
                         .IsUnique();
@@ -461,7 +962,7 @@ namespace EWMS.Api.Migrations
 
                     b.Property<string>("BinName")
                         .IsRequired()
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal>("MaxWeightKg")
                         .HasColumnType("decimal(10,2)");
@@ -530,7 +1031,7 @@ namespace EWMS.Api.Migrations
 
                     b.Property<string>("SectionName")
                         .IsRequired()
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("StorageSectionTypeId")
                         .HasColumnType("int");
@@ -556,7 +1057,7 @@ namespace EWMS.Api.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("TypeCode")
                         .IsRequired()
@@ -579,11 +1080,11 @@ namespace EWMS.Api.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Address")
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("ContactPerson")
                         .IsRequired()
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Email")
                         .HasColumnType("varchar(100)");
@@ -601,7 +1102,7 @@ namespace EWMS.Api.Migrations
 
                     b.Property<string>("SupplierName")
                         .IsRequired()
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
@@ -609,6 +1110,126 @@ namespace EWMS.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("Supplier", (string)null);
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.TransferOrder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ApprovedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DestinationStaffUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FromWarehouseId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RequestedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<int>("ToWarehouseId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApprovedByUserId");
+
+                    b.HasIndex("DestinationStaffUserId");
+
+                    b.HasIndex("FromWarehouseId");
+
+                    b.HasIndex("RequestedByUserId");
+
+                    b.HasIndex("ToWarehouseId");
+
+                    b.ToTable("TransferOrder", (string)null);
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.TransferOrderItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ActualReceivedQty")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DiscrepancyNote")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("FromBinId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductVariantId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RequestedQty")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ToBinId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TransferOrderId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FromBinId");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("ToBinId");
+
+                    b.HasIndex("TransferOrderId");
+
+                    b.ToTable("TransferOrderItem", (string)null);
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.TransferOrderSerial", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("DispatchedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ReceivedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SerialNumberId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<int>("TransferOrderItemId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SerialNumberId");
+
+                    b.HasIndex("TransferOrderItemId");
+
+                    b.ToTable("TransferOrderSerial", (string)null);
                 });
 
             modelBuilder.Entity("EWMS.Api.Entities.User", b =>
@@ -625,7 +1246,7 @@ namespace EWMS.Api.Migrations
 
                     b.Property<string>("FullName")
                         .IsRequired()
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -646,6 +1267,10 @@ namespace EWMS.Api.Migrations
                         .HasColumnType("varchar(50)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PhoneNumber")
+                        .IsUnique()
+                        .HasFilter("[PhoneNumber] IS NOT NULL");
 
                     b.HasIndex("RoleId");
 
@@ -680,7 +1305,7 @@ namespace EWMS.Api.Migrations
 
                     b.Property<string>("Address")
                         .IsRequired()
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<decimal>("Area")
                         .HasColumnType("decimal(12,2)");
@@ -707,7 +1332,7 @@ namespace EWMS.Api.Migrations
 
                     b.Property<string>("WarehouseName")
                         .IsRequired()
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
@@ -719,6 +1344,28 @@ namespace EWMS.Api.Migrations
                     b.ToTable("Warehouse", (string)null);
                 });
 
+            modelBuilder.Entity("EWMS.Api.Entities.AuditLog", b =>
+                {
+                    b.HasOne("EWMS.Api.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.AuthSession", b =>
+                {
+                    b.HasOne("EWMS.Api.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("EWMS.Api.Entities.Category", b =>
                 {
                     b.HasOne("EWMS.Api.Entities.Category", "Parent")
@@ -727,6 +1374,52 @@ namespace EWMS.Api.Migrations
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.DeliveryOrder", b =>
+                {
+                    b.HasOne("EWMS.Api.Entities.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EWMS.Api.Entities.OutboundRequest", "OutboundRequest")
+                        .WithMany("DeliveryOrders")
+                        .HasForeignKey("OutboundRequestId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("OutboundRequest");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.DeliveryOrderItem", b =>
+                {
+                    b.HasOne("EWMS.Api.Entities.StorageBin", "Bin")
+                        .WithMany()
+                        .HasForeignKey("BinId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EWMS.Api.Entities.DeliveryOrder", "DeliveryOrder")
+                        .WithMany("Items")
+                        .HasForeignKey("DeliveryOrderId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EWMS.Api.Entities.ProductVariant", "ProductVariant")
+                        .WithMany()
+                        .HasForeignKey("ProductVariantId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Bin");
+
+                    b.Navigation("DeliveryOrder");
+
+                    b.Navigation("ProductVariant");
                 });
 
             modelBuilder.Entity("EWMS.Api.Entities.GoodsReceipt", b =>
@@ -760,11 +1453,10 @@ namespace EWMS.Api.Migrations
                     b.HasOne("EWMS.Api.Entities.StorageBin", "Bin")
                         .WithMany()
                         .HasForeignKey("BinId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("EWMS.Api.Entities.GoodsReceipt", "GoodsReceipt")
-                        .WithMany()
+                        .WithMany("Items")
                         .HasForeignKey("GoodsReceiptId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
@@ -782,11 +1474,48 @@ namespace EWMS.Api.Migrations
                     b.Navigation("ProductVariant");
                 });
 
+            modelBuilder.Entity("EWMS.Api.Entities.GoodsReceiptSerial", b =>
+                {
+                    b.HasOne("EWMS.Api.Entities.User", "ScannedByUser")
+                        .WithMany()
+                        .HasForeignKey("ScannedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EWMS.Api.Entities.GoodsReceiptItem", "GoodsReceiptItem")
+                        .WithMany("Serials")
+                        .HasForeignKey("GoodsReceiptItemId", "GoodsReceiptId")
+                        .HasPrincipalKey("Id", "GoodsReceiptId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("GoodsReceiptItem");
+
+                    b.Navigation("ScannedByUser");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.InboundExpectedSerial", b =>
+                {
+                    b.HasOne("EWMS.Api.Entities.InboundRequestItem", "InboundRequestItem")
+                        .WithMany()
+                        .HasForeignKey("InboundRequestItemId", "InboundRequestId")
+                        .HasPrincipalKey("Id", "InboundRequestId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("InboundRequestItem");
+                });
+
             modelBuilder.Entity("EWMS.Api.Entities.InboundRequest", b =>
                 {
                     b.HasOne("EWMS.Api.Entities.User", "ApprovedByUser")
                         .WithMany()
                         .HasForeignKey("ApprovedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("EWMS.Api.Entities.User", "AssignedStaffUser")
+                        .WithMany()
+                        .HasForeignKey("AssignedStaffUserId")
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("EWMS.Api.Entities.User", "RequestedByUser")
@@ -807,6 +1536,8 @@ namespace EWMS.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("ApprovedByUser");
+
+                    b.Navigation("AssignedStaffUser");
 
                     b.Navigation("RequestedByUser");
 
@@ -830,6 +1561,163 @@ namespace EWMS.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("InboundRequest");
+
+                    b.Navigation("ProductVariant");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.InventorySheet", b =>
+                {
+                    b.HasOne("EWMS.Api.Entities.User", "ApprovedByUser")
+                        .WithMany()
+                        .HasForeignKey("ApprovedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("EWMS.Api.Entities.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EWMS.Api.Entities.Warehouse", "Warehouse")
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("ApprovedByUser");
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.InventorySheetItem", b =>
+                {
+                    b.HasOne("EWMS.Api.Entities.StorageBin", "Bin")
+                        .WithMany()
+                        .HasForeignKey("BinId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EWMS.Api.Entities.InventorySheet", "InventorySheet")
+                        .WithMany("Items")
+                        .HasForeignKey("InventorySheetId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EWMS.Api.Entities.ProductVariant", "ProductVariant")
+                        .WithMany()
+                        .HasForeignKey("ProductVariantId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Bin");
+
+                    b.Navigation("InventorySheet");
+
+                    b.Navigation("ProductVariant");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.InventorySheetSerial", b =>
+                {
+                    b.HasOne("EWMS.Api.Entities.User", "CountedByUser")
+                        .WithMany()
+                        .HasForeignKey("CountedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("EWMS.Api.Entities.StorageBin", "ExpectedBin")
+                        .WithMany()
+                        .HasForeignKey("ExpectedBinId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("EWMS.Api.Entities.InventorySheet", "InventorySheet")
+                        .WithMany("Serials")
+                        .HasForeignKey("InventorySheetId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EWMS.Api.Entities.StorageBin", "ScannedBin")
+                        .WithMany()
+                        .HasForeignKey("ScannedBinId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("EWMS.Api.Entities.SerialNumber", "SerialNumber")
+                        .WithMany()
+                        .HasForeignKey("SerialNumberId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("CountedByUser");
+
+                    b.Navigation("ExpectedBin");
+
+                    b.Navigation("InventorySheet");
+
+                    b.Navigation("ScannedBin");
+
+                    b.Navigation("SerialNumber");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.InventorySheetTrack", b =>
+                {
+                    b.HasOne("EWMS.Api.Entities.User", "CountedByUser")
+                        .WithMany()
+                        .HasForeignKey("CountedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EWMS.Api.Entities.InventorySheetItem", "InventorySheetItem")
+                        .WithMany("Tracks")
+                        .HasForeignKey("InventorySheetItemId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("CountedByUser");
+
+                    b.Navigation("InventorySheetItem");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.OutboundRequest", b =>
+                {
+                    b.HasOne("EWMS.Api.Entities.User", "ApprovedByUser")
+                        .WithMany()
+                        .HasForeignKey("ApprovedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("EWMS.Api.Entities.User", "RequestedByUser")
+                        .WithMany()
+                        .HasForeignKey("RequestedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EWMS.Api.Entities.Warehouse", "Warehouse")
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("ApprovedByUser");
+
+                    b.Navigation("RequestedByUser");
+
+                    b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.OutboundRequestItem", b =>
+                {
+                    b.HasOne("EWMS.Api.Entities.OutboundRequest", "OutboundRequest")
+                        .WithMany("Items")
+                        .HasForeignKey("OutboundRequestId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EWMS.Api.Entities.ProductVariant", "ProductVariant")
+                        .WithMany()
+                        .HasForeignKey("ProductVariantId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("OutboundRequest");
 
                     b.Navigation("ProductVariant");
                 });
@@ -876,17 +1764,54 @@ namespace EWMS.Api.Migrations
 
             modelBuilder.Entity("EWMS.Api.Entities.RolePermission", b =>
                 {
-                    b.HasOne("EWMS.Api.Entities.Permission", null)
+                    b.HasOne("EWMS.Api.Entities.Permission", "Permission")
                         .WithMany()
                         .HasForeignKey("PermissionId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("EWMS.Api.Entities.Role", null)
+                    b.HasOne("EWMS.Api.Entities.Role", "Role")
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.SerialMovement", b =>
+                {
+                    b.HasOne("EWMS.Api.Entities.StorageBin", "FromBin")
+                        .WithMany()
+                        .HasForeignKey("FromBinId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("EWMS.Api.Entities.User", "PerformedByUser")
+                        .WithMany()
+                        .HasForeignKey("PerformedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EWMS.Api.Entities.SerialNumber", "SerialNumber")
+                        .WithMany()
+                        .HasForeignKey("SerialNumberId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EWMS.Api.Entities.StorageBin", "ToBin")
+                        .WithMany()
+                        .HasForeignKey("ToBinId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("FromBin");
+
+                    b.Navigation("PerformedByUser");
+
+                    b.Navigation("SerialNumber");
+
+                    b.Navigation("ToBin");
                 });
 
             modelBuilder.Entity("EWMS.Api.Entities.SerialNumber", b =>
@@ -894,6 +1819,11 @@ namespace EWMS.Api.Migrations
                     b.HasOne("EWMS.Api.Entities.StorageBin", "CurrentBin")
                         .WithMany()
                         .HasForeignKey("CurrentBinId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("EWMS.Api.Entities.DeliveryOrderItem", "DispatchedInDeliveryItem")
+                        .WithMany("DispatchedSerialNumbers")
+                        .HasForeignKey("DispatchedInDeliveryItemId")
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("EWMS.Api.Entities.GoodsReceiptItem", "OriginGoodsReceiptItem")
@@ -907,11 +1837,20 @@ namespace EWMS.Api.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("EWMS.Api.Entities.OutboundRequestItem", "ReservedForOutboundItem")
+                        .WithMany("ReservedSerialNumbers")
+                        .HasForeignKey("ReservedForOutboundItemId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("CurrentBin");
+
+                    b.Navigation("DispatchedInDeliveryItem");
 
                     b.Navigation("OriginGoodsReceiptItem");
 
                     b.Navigation("ProductVariant");
+
+                    b.Navigation("ReservedForOutboundItem");
                 });
 
             modelBuilder.Entity("EWMS.Api.Entities.Stock", b =>
@@ -974,13 +1913,110 @@ namespace EWMS.Api.Migrations
                     b.Navigation("Warehouse");
                 });
 
+            modelBuilder.Entity("EWMS.Api.Entities.TransferOrder", b =>
+                {
+                    b.HasOne("EWMS.Api.Entities.User", "ApprovedByUser")
+                        .WithMany()
+                        .HasForeignKey("ApprovedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("EWMS.Api.Entities.User", "DestinationStaffUser")
+                        .WithMany()
+                        .HasForeignKey("DestinationStaffUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("EWMS.Api.Entities.Warehouse", "FromWarehouse")
+                        .WithMany()
+                        .HasForeignKey("FromWarehouseId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EWMS.Api.Entities.User", "RequestedByUser")
+                        .WithMany()
+                        .HasForeignKey("RequestedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EWMS.Api.Entities.Warehouse", "ToWarehouse")
+                        .WithMany()
+                        .HasForeignKey("ToWarehouseId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("ApprovedByUser");
+
+                    b.Navigation("DestinationStaffUser");
+
+                    b.Navigation("FromWarehouse");
+
+                    b.Navigation("RequestedByUser");
+
+                    b.Navigation("ToWarehouse");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.TransferOrderItem", b =>
+                {
+                    b.HasOne("EWMS.Api.Entities.StorageBin", "FromBin")
+                        .WithMany()
+                        .HasForeignKey("FromBinId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EWMS.Api.Entities.ProductVariant", "ProductVariant")
+                        .WithMany()
+                        .HasForeignKey("ProductVariantId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EWMS.Api.Entities.StorageBin", "ToBin")
+                        .WithMany()
+                        .HasForeignKey("ToBinId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EWMS.Api.Entities.TransferOrder", "TransferOrder")
+                        .WithMany("Items")
+                        .HasForeignKey("TransferOrderId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("FromBin");
+
+                    b.Navigation("ProductVariant");
+
+                    b.Navigation("ToBin");
+
+                    b.Navigation("TransferOrder");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.TransferOrderSerial", b =>
+                {
+                    b.HasOne("EWMS.Api.Entities.SerialNumber", "SerialNumber")
+                        .WithMany()
+                        .HasForeignKey("SerialNumberId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("EWMS.Api.Entities.TransferOrderItem", "TransferOrderItem")
+                        .WithMany("Serials")
+                        .HasForeignKey("TransferOrderItemId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("SerialNumber");
+
+                    b.Navigation("TransferOrderItem");
+                });
+
             modelBuilder.Entity("EWMS.Api.Entities.User", b =>
                 {
-                    b.HasOne("EWMS.Api.Entities.Role", null)
+                    b.HasOne("EWMS.Api.Entities.Role", "Role")
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
+
+                    b.Navigation("Role");
                 });
 
             modelBuilder.Entity("EWMS.Api.Entities.UserWarehouse", b =>
@@ -1011,6 +2047,60 @@ namespace EWMS.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("ManagerUser");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.DeliveryOrder", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.DeliveryOrderItem", b =>
+                {
+                    b.Navigation("DispatchedSerialNumbers");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.GoodsReceipt", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.GoodsReceiptItem", b =>
+                {
+                    b.Navigation("Serials");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.InventorySheet", b =>
+                {
+                    b.Navigation("Items");
+
+                    b.Navigation("Serials");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.InventorySheetItem", b =>
+                {
+                    b.Navigation("Tracks");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.OutboundRequest", b =>
+                {
+                    b.Navigation("DeliveryOrders");
+
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.OutboundRequestItem", b =>
+                {
+                    b.Navigation("ReservedSerialNumbers");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.TransferOrder", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("EWMS.Api.Entities.TransferOrderItem", b =>
+                {
+                    b.Navigation("Serials");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,0 +1,1307 @@
+/* CSS riêng module nhận hàng, dùng tiền tố gr- để không đè giao diện Inbound. */
+.gr-decision-record { margin-bottom: 24px; border-left: 3px solid #3b8769; }
+.gr-decision-record--rejected { border-left-color: #b9434f; }
+.gr-decision-record .gr-eyebrow { margin-bottom: 9px; }
+.gr-decision-metadata { display: flex; flex-wrap: wrap; gap: 20px 44px; padding: 0 24px 20px; }
+.gr-decision-metadata > div { display: grid; gap: 7px; }
+.gr-decision-metadata span { font-size: 11px; color: #71829a; }
+.gr-decision-metadata strong { font-size: 13px; font-weight: 600; color: #304c70; }
+.gr-decision-note { padding: 0 24px 24px; }
+.gr-decision-note h3 { font-size: 13px; color: #4b607c; margin-bottom: 9px; }
+.gr-decision-note p { white-space: pre-wrap; overflow-wrap: anywhere; background: #f5f8fc; border-radius: 7px; padding: 14px 16px; color: #263e60; line-height: 1.8; }
+.gr-workspace {
+  color: #233650;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.gr-workspace-topbar {
+  min-height: 86px;
+  background: #fff;
+  border-bottom: 1px solid #e4eaf1;
+  padding: 16px 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  color: #687a91;
+  font-size: 11px;
+  letter-spacing: .7px;
+}
+
+.gr-topbar-divider {
+  margin: 0 9px;
+  color: #c4cedb;
+}
+
+.gr-user-area {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.gr-user-label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  letter-spacing: 0;
+}
+
+.gr-user-label strong {
+  display: block;
+  color: #354a65;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.gr-user-label small {
+  display: block;
+  color: #77879b;
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.gr-avatar {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #eaf1fb;
+  color: #3863a0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.gr-content {
+  max-width: 1440px;
+  padding: 34px 36px 60px;
+  margin: 0 auto;
+}
+
+.gr-page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 26px;
+}
+
+.gr-eyebrow {
+  color: #6d819b;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.3px;
+  margin: 0 0 7px;
+}
+
+.gr-content h1 {
+  margin: 0 0 9px;
+  font-size: 32px;
+  line-height: 1.2;
+  letter-spacing: -.9px;
+  color: #19304e;
+  font-weight: 650;
+}
+
+.gr-content h2 {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.35;
+  color: #233b59;
+  font-weight: 650;
+}
+
+.gr-content h3 {
+  font-size: 15px;
+  margin: 0;
+}
+
+.gr-page-heading p:not(.gr-eyebrow) {
+  color: #6c7e95;
+  font-size: 13px;
+}
+
+.gr-panel {
+  margin-bottom: 22px;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e1e7f0;
+  border-radius: 12px;
+  box-shadow: 0 3px 12px #253c5b03;
+}
+
+.gr-panel-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.gr-panel-heading p {
+  color: #718198;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.gr-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  min-height: 43px;
+  padding: 11px 17px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+
+.gr-button--primary {
+  color: #fff;
+  background: #2b61ca;
+  box-shadow: 0 2px 3px #1b4a9c0d;
+}
+
+.gr-button--primary:hover {
+  background: #2252b3;
+}
+
+.gr-button--secondary {
+  color: #2a5dac;
+  background: #fff;
+  border-color: #ccd9ec;
+}
+
+.gr-button--secondary:hover {
+  background: #f2f6fc;
+  border-color: #9cb8de;
+}
+
+.gr-button--quiet {
+  color: #5a6f89;
+  background: transparent;
+  border-color: #e1e7f0;
+}
+
+.gr-button--quiet:hover {
+  background: #f2f5f9;
+}
+
+.gr-button--danger {
+  background: #bc4144;
+  color: #fff;
+}
+
+.gr-button--danger:hover {
+  background: #a93639;
+}
+
+.gr-button--danger-outline {
+  color: #ae4145;
+  background: #fff;
+  border-color: #e8c6c8;
+}
+
+.gr-button--danger-outline:hover {
+  background: #fff4f4;
+}
+
+.gr-button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.gr-text-button, .gr-receipt-link, .gr-back-link {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: #2d61af;
+  padding: 5px 0;
+  font-size: inherit;
+  font-weight: 600;
+}
+
+.gr-text-button:hover, .gr-back-link:hover {
+  text-decoration: underline;
+}
+
+.gr-back-link {
+  color: #647a97;
+  margin: 0 0 21px;
+  font-size: 12px;
+}
+
+.gr-back-link:disabled {
+  opacity: .5;
+  cursor: wait;
+}
+
+.gr-receipt-link {
+  font-family: Consolas, monospace;
+  letter-spacing: .2px;
+}
+
+.gr-receipt-link:hover {
+  text-decoration: underline;
+}
+
+.gr-inline-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gr-workflow-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #586f8c;
+  font-size: 12px;
+  margin: 0 0 25px;
+  padding: 0 2px;
+}
+
+.gr-workflow-note strong {
+  color: #3b5576;
+  font-weight: 600;
+}
+
+.gr-note-dot {
+  width: 7px;
+  height: 7px;
+  background: #668cc5;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.gr-tabs {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.gr-tabs button {
+  font-size: 14px;
+  color: #7c8a9e;
+  padding: 9px 0;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gr-tabs button.active {
+  border-bottom-color: #3268d1;
+  color: #285db7;
+}
+
+.gr-filter-form {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.2fr) minmax(140px, 1.2fr) minmax(130px, 1fr) minmax(130px, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.gr-workspace label, .gr-dialog label {
+  display: grid;
+  gap: 7px;
+  color: #5e728c;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.gr-workspace input, .gr-workspace select, .gr-workspace textarea, .gr-dialog textarea {
+  width: 100%;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #dbe3ee;
+  border-radius: 7px;
+  padding: 11px 12px;
+  color: #263d5b;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.gr-workspace input::placeholder, .gr-dialog textarea::placeholder {
+  color: #8c9baf;
+}
+
+.gr-workspace input:focus, .gr-workspace select:focus, .gr-dialog textarea:focus {
+  border-color: #6d99db;
+}
+
+.gr-workspace input:disabled, .gr-workspace select:disabled {
+  background: #f3f5f9;
+  color: #7b889a;
+}
+
+.gr-table-scroll {
+  position: relative;
+  overflow-x: auto;
+  width: 100%;
+}
+
+.gr-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.gr-table th {
+  padding: 15px 14px;
+  background: #f8fafd;
+  color: #71829a;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  border-bottom: 1px solid #e8edf4;
+}
+
+.gr-table td {
+  padding: 19px 14px;
+  border-bottom: 1px solid #edf1f6;
+  vertical-align: middle;
+  white-space: nowrap;
+  color: #4d6380;
+}
+
+.gr-table tbody tr:hover {
+  background: #fafcfe;
+}
+
+.gr-table .gr-date {
+  color: #74849a;
+  font-size: 12px;
+}
+
+.gr-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.gr-status::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.gr-status--Draft {
+  background: #f0f3f8;
+  color: #677994;
+  border-color: #e5eaf1;
+}
+
+.gr-status--PendingApproval {
+  background: #fff6e5;
+  color: #94651d;
+  border-color: #f5e7c9;
+}
+
+.gr-status--Approved {
+  background: #ecf7f2;
+  color: #33785e;
+  border-color: #d9eee3;
+}
+
+.gr-status--Rejected {
+  background: #fdf0f0;
+  color: #a7464b;
+  border-color: #f1dfe0;
+}
+
+.gr-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  color: #76869b;
+  font-size: 12px;
+}
+
+.gr-pagination > div {
+  display: flex;
+  gap: 8px;
+}
+
+.gr-pagination .gr-button {
+  min-height: 36px;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+.gr-alert {
+  padding: 14px 17px;
+  border: 1px solid;
+  border-radius: 8px;
+  margin: 0 0 20px;
+  line-height: 1.6;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.gr-alert p {
+  margin-top: 5px;
+}
+
+.gr-alert--error {
+  color: #a14548;
+  background: #fff3f3;
+  border-color: #f0d6d8;
+}
+
+.gr-alert--success {
+  color: #356f58;
+  background: #edf7f2;
+  border-color: #d5e9df;
+}
+
+.gr-alert--info {
+  color: #486a9b;
+  background: #edf4fe;
+  border-color: #d8e5f7;
+}
+
+.gr-alert .gr-text-button {
+  margin-left: 7px;
+}
+
+.gr-empty {
+  text-align: center;
+  padding: 56px 24px;
+  color: #72839a;
+}
+
+.gr-empty h1 {
+  font-size: 25px;
+  margin-bottom: 16px;
+}
+
+.gr-empty h2 {
+  font-size: 18px;
+  margin: 14px 0 9px;
+}
+
+.gr-empty p {
+  margin: 0 auto 20px;
+  max-width: 510px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.gr-empty .gr-inline-actions {
+  justify-content: center;
+}
+
+.gr-empty-symbol {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  background: #eff3f9;
+  border-radius: 12px;
+  color: #7a93b9;
+  font-family: Consolas, monospace;
+  font-size: 16px;
+  font-weight: 700;
+  border: 1px solid #e1e9f3;
+}
+
+.gr-section-label {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.gr-section-label > span {
+  width: 31px;
+  height: 31px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: #edf3fd;
+  border: 1px solid #dce7f7;
+  color: #3e6bb1;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.gr-section-label p {
+  color: #77879b;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.gr-inbound-select {
+  max-width: 650px;
+}
+
+.gr-inbound-preview {
+  border: 1px solid #e2e9f2;
+  border-radius: 9px;
+  overflow: hidden;
+  margin-top: 25px;
+}
+
+.gr-preview-title {
+  padding: 16px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+
+.gr-preview-title span {
+  color: #7c8ba0;
+  font-size: 12px;
+}
+
+.gr-form-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding-top: 24px;
+}
+
+.gr-form-footer > p {
+  color: #7c8a9e;
+  font-size: 12px;
+  max-width: 430px;
+  line-height: 1.65;
+}
+
+.gr-table .gr-sku {
+  font-family: Consolas, monospace;
+  color: #344f70;
+  font-size: 12px;
+}
+
+.gr-title-line {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 7px;
+}
+
+.gr-title-line h1 {
+  margin: 0;
+}
+
+.gr-separator {
+  color: #c3cdd9;
+  margin: 0 9px;
+}
+
+.gr-quantity {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.gr-quantity strong {
+  display: block;
+  font-size: 32px;
+  color: #35557f;
+  font-weight: 600;
+  letter-spacing: -1px;
+  line-height: 1.2;
+}
+
+.gr-quantity span {
+  font-size: 11px;
+  color: #8693a6;
+}
+
+.gr-steps {
+  display: flex;
+  margin: 0 0 25px;
+  padding: 0;
+  list-style: none;
+  gap: 0;
+}
+
+.gr-steps li {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 9px;
+  font-size: 11px;
+  color: #8794a7;
+  position: relative;
+}
+
+.gr-steps li:not(:last-child)::after {
+  content: "";
+  height: 1px;
+  background: #dfe6ef;
+  flex: 1;
+  margin: 0 16px;
+}
+
+.gr-steps li > span {
+  width: 23px;
+  height: 23px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #dce4ef;
+  border-radius: 50%;
+  font-size: 10px;
+  background: #f9fbfd;
+  flex-shrink: 0;
+}
+
+.gr-steps li.done {
+  color: #4b6d9f;
+}
+
+.gr-steps li.done > span {
+  background: #e8f0fd;
+  border-color: #d1e0f7;
+  color: #3265b4;
+}
+
+.gr-scan-panel {
+  margin-bottom: 22px;
+  padding: 24px;
+  background: #eff5fe;
+  border: 1px solid #d7e5f8;
+  border-left: 3px solid #4e7ed0;
+  border-radius: 10px;
+}
+
+.gr-scan-panel > div > p:not(.gr-eyebrow) {
+  margin-top: 7px;
+  color: #7285a0;
+  font-size: 12px;
+}
+
+.gr-scan-form {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(230px, 1.6fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.gr-scan-form input {
+  font-family: Consolas, monospace;
+  font-size: 16px;
+  padding-block: 10px;
+}
+
+.gr-items-table select {
+  min-width: 195px;
+  max-width: 265px;
+  font-size: 12px;
+}
+
+.gr-count {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: #edf3fd;
+  color: #3262ae;
+}
+
+.gr-unsaved {
+  background: #fff8e9;
+  color: #9b742e;
+  border: 1px solid #f1e4c6;
+  padding: 5px 9px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.gr-muted {
+  color: #8291a5;
+  font-size: 13px;
+}
+
+.gr-serial-group {
+  border-top: 1px solid #e8edf4;
+  padding: 15px 0 0;
+  margin-top: 14px;
+}
+
+.gr-serial-group:first-of-type {
+  margin-top: 0;
+}
+
+.gr-serial-group summary {
+  cursor: pointer;
+  color: #526d8f;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+}
+
+.gr-serial-group summary span {
+  display: inline-block;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 11px;
+  margin-left: 13px;
+  color: #8a98ab;
+}
+
+.gr-serial-group ul {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  padding: 13px 0 0;
+  margin: 0;
+  gap: 7px;
+}
+
+.gr-serial-group li {
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  padding: 6px 10px;
+  border: 1px solid #e3e9f1;
+  border-radius: 5px;
+  background: #f9fbfd;
+  color: #526b8c;
+  overflow-wrap: anywhere;
+}
+
+.gr-review-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin-top: 25px;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #d9e3f0;
+  border-radius: 10px;
+  box-shadow: 0 3px 12px #253c5b04;
+}
+
+.gr-review-panel > div > p:last-child {
+  margin-top: 7px;
+  color: #78899f;
+  font-size: 12px;
+}
+
+.gr-dialog {
+  width: 520px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  border: 1px solid #dbe3ef;
+  border-radius: 14px;
+  padding: 30px;
+  color: #3c5576;
+  box-shadow: 0 25px 90px #14294640;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.gr-dialog::backdrop {
+  background: #10233d66;
+}
+
+.gr-dialog h2 {
+  font-size: 23px;
+  margin: 7px 0 15px;
+  line-height: 1.3;
+  color: #243e60;
+}
+
+.gr-dialog form > p:not(.gr-eyebrow) {
+  font-size: 13px;
+  margin: 0 0 22px;
+  line-height: 1.6;
+}
+
+.gr-dialog .gr-alert {
+  margin-top: 20px;
+  font-size: 13px;
+}
+
+.gr-dialog-actions {
+  margin-top: 25px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.gr-dialog textarea {
+  resize: vertical;
+  min-height: 120px;
+  font-size: 16px;
+}
+
+.gr-field-hint {
+  font-size: 11px;
+  color: #8493a7;
+  font-weight: 400;
+}
+
+.gr-inline-error {
+  color: #a14548;
+  font-size: 12px;
+  margin-top: 10px;
+}
+
+@media (min-width: 1700px) {
+  .gr-content {
+    padding-top: 44px;
+  }
+  .gr-workspace-topbar {
+    padding-inline: 48px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .gr-content {
+    padding: 28px 24px 45px;
+  }
+  .gr-workspace-topbar {
+    padding-inline: 24px;
+  }
+  .gr-filter-form {
+    grid-template-columns: 1fr 1fr;
+  }
+  .gr-filter-form .gr-button {
+    justify-self: start;
+  }
+  .gr-scan-form {
+    grid-template-columns: 1fr 1.4fr;
+  }
+  .gr-scan-form .gr-button {
+    grid-column: 2;
+    justify-self: end;
+  }
+  .gr-steps li:not(:last-child)::after {
+    margin-inline: 8px;
+  }
+  .gr-steps li {
+    font-size: 10px;
+    gap: 6px;
+  }
+  .gr-user-label strong {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (max-width: 760px) {
+  .gr-content {
+    padding: 25px 16px 38px;
+  }
+  .gr-workspace-topbar {
+    min-height: 70px;
+    padding: 13px 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .gr-workspace-topbar > span {
+    font-size: 10px;
+  }
+  .gr-user-area {
+    width: 100%;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .gr-user-label strong {
+    display: none;
+  }
+  .gr-avatar {
+    width: 30px;
+    height: 30px;
+  }
+  .gr-user-label {
+    gap: 6px;
+  }
+  .gr-user-label small {
+    font-size: 10px;
+  }
+  .gr-page-heading {
+    gap: 16px;
+    align-items: flex-start;
+    flex-direction: column;
+    margin-bottom: 23px;
+  }
+  .gr-content h1 {
+    font-size: 28px;
+  }
+  .gr-page-heading p:not(.gr-eyebrow) {
+    font-size: 12px;
+  }
+  .gr-panel {
+    padding: 18px 16px;
+    border-radius: 10px;
+  }
+  .gr-panel-heading {
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .gr-panel-heading h2 {
+    font-size: 16px;
+  }
+  .gr-panel-heading p {
+    font-size: 11px;
+  }
+  .gr-panel-heading > .gr-button {
+    padding-inline: 10px;
+    font-size: 11px;
+  }
+  .gr-tabs {
+    gap: 17px;
+  }
+  .gr-tabs button {
+    font-size: 13px;
+  }
+  .gr-button {
+    min-height: 44px;
+  }
+  .gr-filter-form {
+    gap: 13px 10px;
+  }
+  .gr-workspace input, .gr-workspace select {
+    font-size: 16px;
+  }
+  .gr-filter-form .gr-button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+  .gr-pagination {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .gr-pagination > div {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .gr-table th, .gr-table td {
+    padding-inline: 11px;
+  }
+  .gr-table td {
+    font-size: 12px;
+  }
+  .gr-steps {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 10px;
+  }
+  .gr-steps li {
+    font-size: 11px;
+  }
+  .gr-steps li:not(:last-child)::after {
+    display: none;
+  }
+  .gr-scan-panel {
+    padding: 20px 16px;
+  }
+  .gr-scan-form {
+    grid-template-columns: 1fr;
+  }
+  .gr-scan-form .gr-button {
+    grid-column: auto;
+    width: 100%;
+  }
+  .gr-form-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 18px;
+  }
+  .gr-form-footer .gr-inline-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .gr-form-footer > p {
+    font-size: 11px;
+  }
+  .gr-quantity {
+    text-align: left;
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+  }
+  .gr-quantity strong {
+    font-size: 26px;
+  }
+  .gr-title-line {
+    gap: 10px;
+  }
+  .gr-review-panel {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 20px 16px;
+  }
+  .gr-review-panel .gr-inline-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .gr-preview-title {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .gr-unsaved {
+    white-space: normal;
+    max-width: 110px;
+    text-align: center;
+  }
+  .gr-dialog {
+    padding: 24px 20px;
+  }
+  .gr-dialog-actions {
+    flex-direction: column-reverse;
+  }
+  .gr-dialog-actions .gr-button {
+    width: 100%;
+  }
+}
+
+
+/* Per-product serial scanning & device visualization */
+.gr-product-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 16px 0 20px;
+}
+
+.gr-product-pill {
+  border: 1px solid #d4e1f2;
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: grid;
+  gap: 4px;
+}
+
+.gr-product-pill:hover {
+  border-color: #5c8ed6;
+  background: #f7faff;
+}
+
+.gr-product-pill--active {
+  border-color: #2b66c4 !important;
+  background: #eaf2fd !important;
+  box-shadow: 0 0 0 2px rgba(43, 102, 196, 0.2);
+}
+
+.gr-product-pill--done {
+  border-color: #a3d9be;
+  background: #f2faf6;
+}
+
+.gr-pill-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: #243a57;
+}
+
+.gr-pill-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.gr-pill-meta code {
+  font-family: Consolas, monospace;
+  color: #526f94;
+}
+
+.gr-pill-badge {
+  background: #e2eaf5;
+  color: #315177;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.gr-product-pill--done .gr-pill-badge {
+  background: #daf1e4;
+  color: #26734c;
+}
+
+.gr-scan-target-box {
+  background: #fff;
+  border: 1px solid #d4e2f5;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.gr-scan-target-info strong {
+  font-size: 14px;
+  color: #1e3656;
+}
+
+.gr-scan-target-info span {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #6a7f9b;
+}
+
+.gr-item-row--active td {
+  background: #f4f8fe !important;
+}
+
+.gr-product-name-col strong {
+  display: block;
+  font-size: 13px;
+  color: #243b59;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.gr-product-name-col code {
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  color: #58708f;
+  background: #f0f4fa;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.gr-row-scan-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gr-row-scan-form input {
+  padding: 7px 10px;
+  font-size: 13px;
+  font-family: Consolas, monospace;
+  width: 170px;
+}
+
+.gr-row-scan-form button {
+  padding: 7px 12px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.gr-item-serials-row td {
+  padding: 10px 14px 18px !important;
+  background: #fcfdfe !important;
+}
+
+.gr-item-serials-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border: 1px dashed #dbe4ef;
+  border-radius: 6px;
+}
+
+.gr-item-serials-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: #556c88;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gr-item-serials-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.gr-serial-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid #dbe3ed;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  color: #344c68;
+}
+
+.gr-serial-chip-idx {
+  font-family: system-ui, sans-serif;
+  color: #8c9daf;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.gr-badge-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: 5px;
+  background: #ecf8f1;
+  color: #277950;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #cceade;
+}
+
+
+/* Typography and Vietnamese font-rendering fixes */
+.gr-serial-group summary {
+  font-family: inherit !important;
+  font-size: 13px !important;
+}
+
+.gr-scan-form input,
+.gr-row-scan-form input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Segoe UI", monospace;
+}
+
+.gr-scan-form input::placeholder,
+.gr-row-scan-form input::placeholder {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  font-size: 13px;
+  color: #8c9baf;
+}
+
+.gr-pill-title,
+.gr-scan-target-info,
+.gr-product-name-col strong {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  text-rendering: optimizeLegibility;
+}

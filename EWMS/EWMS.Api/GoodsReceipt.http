@@ -1,0 +1,103 @@
+# Sau mỗi write thành công, chép Version mới nhất vào expectedVersion.
+@baseUrl = http://localhost:5085
+@userName = staff
+@csrfToken = PASTE_CSRF_REQUEST_TOKEN
+@inboundId = 1
+@receiptId = 1
+@itemId = 1
+@binId = 1
+@expectedVersion = PASTE_LATEST_BASE64_VERSION
+
+### Dùng cookie jar của HTTP client; đặt password trong environment riêng, không commit.
+### Lấy csrfToken trước login. Sau login lấy lại token vì identity đã thay đổi.
+GET {{baseUrl}}/api/auth/csrf
+
+### Đăng nhập Staff khi nhận hàng; Manager khi duyệt phiếu
+POST {{baseUrl}}/api/auth/login
+X-CSRF-TOKEN: {{csrfToken}}
+Content-Type: application/json
+
+{ "userName": "{{userName}}", "password": "{{password}}" }
+
+### Lấy csrfToken mới sau đăng nhập
+GET {{baseUrl}}/api/auth/csrf
+
+### Kiểm tra tài khoản thật đang đăng nhập
+GET {{baseUrl}}/api/auth/me
+
+### UC-15: danh sách phiếu trong kho được gán
+GET {{baseUrl}}/api/goods-receipts?page=1&pageSize=20
+X-CSRF-TOKEN: {{csrfToken}}
+
+### UC-17: tạo Draft (201), lấy receiptId/itemId/version trong response
+POST {{baseUrl}}/api/goods-receipts
+X-CSRF-TOKEN: {{csrfToken}}
+Content-Type: application/json
+
+{
+  "inboundRequestId": {{inboundId}}
+}
+
+### UC-16: đọc lại dữ liệu đã lưu
+GET {{baseUrl}}/api/goods-receipts/{{receiptId}}
+X-CSRF-TOKEN: {{csrfToken}}
+
+### UC-50: quét một serial, nhận Version mới và ReceivedQty do server tính
+POST {{baseUrl}}/api/goods-receipts/{{receiptId}}/items/{{itemId}}/serials
+X-CSRF-TOKEN: {{csrfToken}}
+Content-Type: application/json
+
+{
+  "expectedVersion": "{{expectedVersion}}",
+  "serialCode": "SERIAL-001",
+  "sku": "YOUR-SKU"
+}
+
+### UC-18 SAVE_DRAFT: chọn bin sau scan, dùng Version mới nhất
+PUT {{baseUrl}}/api/goods-receipts/{{receiptId}}
+X-CSRF-TOKEN: {{csrfToken}}
+Content-Type: application/json
+
+{
+  "expectedVersion": "{{expectedVersion}}",
+  "items": [
+    { "itemId": {{itemId}}, "binId": {{binId}} }
+  ]
+}
+
+### UC-18 SUBMIT: vẫn chưa tăng Stock
+POST {{baseUrl}}/api/goods-receipts/{{receiptId}}/submit
+X-CSRF-TOKEN: {{csrfToken}}
+Content-Type: application/json
+
+{ "expectedVersion": "{{expectedVersion}}" }
+
+### Manager thấy ngay phiếu vừa submit
+GET {{baseUrl}}/api/goods-receipts?status=PendingApproval
+X-CSRF-TOKEN: {{csrfToken}}
+
+### UC-56 APPROVE: tạo Serial/Movement, tăng Stock và refresh Inbound cùng transaction
+POST {{baseUrl}}/api/goods-receipts/{{receiptId}}/approve
+X-CSRF-TOKEN: {{csrfToken}}
+Content-Type: application/json
+
+{
+  "expectedVersion": "{{expectedVersion}}"
+}
+
+### UC-56 REJECT: dùng một phiếu PendingApproval KHÁC, không dùng phiếu đã Approved
+POST {{baseUrl}}/api/goods-receipts/{{receiptId}}/reject
+X-CSRF-TOKEN: {{csrfToken}}
+Content-Type: application/json
+
+{
+  "expectedVersion": "{{expectedVersion}}",
+  "reason": "Hàng vỡ, thiếu phụ kiện"
+}
+
+### Tiến độ Inbound: chỉ cộng receipt Approved
+GET {{baseUrl}}/api/inbound-requests/{{inboundId}}/receiving-progress
+
+### Logout revokes the current session
+POST {{baseUrl}}/api/auth/logout
+X-CSRF-TOKEN: {{csrfToken}}

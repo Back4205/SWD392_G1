@@ -1,4 +1,7 @@
-﻿
+using System.Security.Claims;
+using EWMS.Api.Common;
+using Microsoft.AspNetCore.Authorization;
+
 using EWMS.Api.DTOs.InboundRequests;
 using EWMS.Api.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace EWMS.Api.Controllers
 {
     [ApiController]
+    [Authorize(Roles = "Warehouse Staff,Manager,Purchasing Manager")]
     [Route("api/inbound-requests")]
     public class InboundRequestController : ControllerBase
     {
@@ -19,6 +23,7 @@ namespace EWMS.Api.Controllers
 
         // Task 1: Create Inbound Request
         [HttpPost]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> Create(
             [FromBody] CreateInboundRequestDto dto)
         {
@@ -27,10 +32,8 @@ namespace EWMS.Api.Controllers
 
             try
             {
-                // Temporary local test user.
-                // Replace with authenticated Manager ID
-                // when JWT integration is available.
-                const int requestedByUserId = 1;
+                if (!await CanUseWarehouseAsync(dto.WarehouseId)) return Forbid();
+                int requestedByUserId = UserId();
 
                 var requestId = await _service.CreateAsync(
                     dto, requestedByUserId);
@@ -58,6 +61,10 @@ namespace EWMS.Api.Controllers
         {
             var requests = await _service.GetAllAsync();
 
+            var warehouses = await AssignedWarehousesAsync();
+            requests = requests.Where(x => warehouses.Contains(x.WarehouseId)).ToList();
+            if (User.IsInRole("Warehouse Staff"))
+                requests = requests.Where(x => CanStaffRead(x.Status)).ToList();
             return Ok(requests);
         }
 
@@ -84,11 +91,14 @@ namespace EWMS.Api.Controllers
                 });
             }
 
+            if (!await CanUseWarehouseAsync(request.WarehouseId)) return Forbid();
+            if (User.IsInRole("Warehouse Staff") && !CanStaffRead(request.Status)) return Forbid();
             return Ok(request);
         }
 
         // Task 4: Update Supplier Commitment
         [HttpPut("{id:int}/supplier-commitment")]
+        [Authorize(Roles = "Purchasing Manager")]
         public async Task<IActionResult> UpdateSupplierCommitment(
             int id,
             [FromBody] UpdateSupplierCommitmentDto dto)
@@ -103,6 +113,9 @@ namespace EWMS.Api.Controllers
 
             try
             {
+                var request = await _service.GetByIdAsync(id);
+                if (request == null) return NotFound(new { message = "Inbound request not found." });
+                if (!await CanUseWarehouseAsync(request.WarehouseId)) return Forbid();
                 await _service.UpdateSupplierCommitmentAsync(id, dto);
 
                 return Ok(new
@@ -115,6 +128,10 @@ namespace EWMS.Api.Controllers
             {
                 return NotFound(new { message = ex.Message });
             }
+            catch (GoodsReceiptException ex)
+            {
+                return StatusCode(ex.StatusCode, new { code = ex.Code, message = ex.Message });
+            }
             catch (ArgumentException ex)
             {
                 return BadRequest(new { message = ex.Message });
@@ -126,6 +143,7 @@ namespace EWMS.Api.Controllers
         }
 
         [HttpPut("{id:int}/review")]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> ReviewInboundRequest(
             int id,
             [FromBody] ReviewInboundRequestDto dto)
@@ -140,12 +158,10 @@ namespace EWMS.Api.Controllers
 
             try
             {
-                // TEMPORARY: Replace with authenticated Manager ID
-                // when Auth module is integrated.
-                // TODO (AUTH INTEGRATION):
-                // Replace hardcoded managerUserId with authenticated user ID.
-                // Restrict this endpoint to users with Manager role.
-                int managerUserId = 1;
+                var request = await _service.GetByIdAsync(id);
+                if (request == null) return NotFound(new { message = "Inbound request not found." });
+                if (!await CanUseWarehouseAsync(request.WarehouseId)) return Forbid();
+                int managerUserId = UserId();
 
                 await _service.ReviewInboundRequestAsync(
                     id,
@@ -163,6 +179,10 @@ namespace EWMS.Api.Controllers
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
+            }
+            catch (GoodsReceiptException ex)
+            {
+                return StatusCode(ex.StatusCode, new { code = ex.Code, message = ex.Message });
             }
             catch (ArgumentException ex)
             {
@@ -188,6 +208,10 @@ namespace EWMS.Api.Controllers
 
             try
             {
+                var request = await _service.GetByIdAsync(id);
+                if (request == null) return NotFound(new { message = "Inbound request not found." });
+                if (!await CanUseWarehouseAsync(request.WarehouseId)) return Forbid();
+                if (User.IsInRole("Warehouse Staff") && !CanStaffRead(request.Status)) return Forbid();
                 var progress = await _service.GetReceivingProgressAsync(id);
 
                 if (progress == null)
@@ -200,6 +224,10 @@ namespace EWMS.Api.Controllers
 
                 return Ok(progress);
             }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
             catch (ArgumentException ex)
             {
                 return BadRequest(new
@@ -209,6 +237,26 @@ namespace EWMS.Api.Controllers
             }
         }
 
+
+        [HttpGet("lookups")]
+        public async Task<IActionResult> GetLookups()
+        {
+            return Ok(await _service.GetLookupsAsync(UserId()));
+        }
+
+        private int UserId() { return int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!); }
+        private Task<List<int>> AssignedWarehousesAsync()
+        {
+            return _service.GetAssignedWarehouseIdsAsync(UserId());
+        }
+        private Task<bool> CanUseWarehouseAsync(int warehouseId)
+        {
+            return _service.CanUseWarehouseAsync(UserId(), warehouseId);
+        }
+        private static bool CanStaffRead(string status)
+        {
+            return status == "Approved" || status == "PartiallyReceived" || status == "Completed";
+        }
 
     }
 }

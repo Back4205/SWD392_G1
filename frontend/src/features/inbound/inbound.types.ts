@@ -6,6 +6,7 @@ export interface CreateInboundRequestItem {
 
 export interface CreateInboundRequestRequest {
     warehouseId: number;
+    assignedStaffUserId: number;
     items: CreateInboundRequestItem[];
 }
 

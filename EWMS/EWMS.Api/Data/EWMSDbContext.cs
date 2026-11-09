@@ -1,8 +1,5 @@
-﻿
 using EWMS.Api.Entities;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Reflection.Emit;
 
 namespace EWMS.Api.Data
 {
@@ -20,6 +17,7 @@ namespace EWMS.Api.Data
         public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
         public DbSet<User> Users => Set<User>();
         public DbSet<UserWarehouse> UserWarehouses => Set<UserWarehouse>();
+        public DbSet<AuthSession> AuthSessions => Set<AuthSession>();
 
         // 2. Product & Supplier
         public DbSet<Category> Categories => Set<Category>();
@@ -39,15 +37,52 @@ namespace EWMS.Api.Data
         // 4. Inbound Request
         public DbSet<InboundRequest> InboundRequests => Set<InboundRequest>();
         public DbSet<InboundRequestItem> InboundRequestItems => Set<InboundRequestItem>();
+        public DbSet<InboundExpectedSerial> InboundExpectedSerials => Set<InboundExpectedSerial>();
 
         // 5. Goods Receipt & Serial
         public DbSet<GoodsReceipt> GoodsReceipts => Set<GoodsReceipt>();
         public DbSet<GoodsReceiptItem> GoodsReceiptItems => Set<GoodsReceiptItem>();
+        public DbSet<GoodsReceiptSerial> GoodsReceiptSerials => Set<GoodsReceiptSerial>();
         public DbSet<SerialNumber> SerialNumbers => Set<SerialNumber>();
+
+        // 6. Transfer, Inventory, Outbound & History
+        public DbSet<TransferOrder> TransferOrders => Set<TransferOrder>();
+        public DbSet<TransferOrderItem> TransferOrderItems => Set<TransferOrderItem>();
+        public DbSet<TransferOrderSerial> TransferOrderSerials => Set<TransferOrderSerial>();
+        public DbSet<InventorySheet> InventorySheets => Set<InventorySheet>();
+        public DbSet<InventorySheetItem> InventorySheetItems => Set<InventorySheetItem>();
+        public DbSet<InventorySheetTrack> InventorySheetTracks => Set<InventorySheetTrack>();
+        public DbSet<InventorySheetSerial> InventorySheetSerials => Set<InventorySheetSerial>();
+        public DbSet<OutboundRequest> OutboundRequests => Set<OutboundRequest>();
+        public DbSet<OutboundRequestItem> OutboundRequestItems => Set<OutboundRequestItem>();
+        public DbSet<DeliveryOrder> DeliveryOrders => Set<DeliveryOrder>();
+        public DbSet<DeliveryOrderItem> DeliveryOrderItems => Set<DeliveryOrderItem>();
+        public DbSet<SerialMovement> SerialMovements => Set<SerialMovement>();
+        public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+        // Gọi sau BeginTransactionAsync. SQL giữ khóa đến khi Commit/Rollback.
+        // Cần khóa để hai request không cùng sử dụng một số lượng/sức chứa còn trống.
+        public Task LockGoodsReceiptAsync()
+        {
+            return Database.ExecuteSqlRawAsync(@"
+                DECLARE @result int;
+                EXEC @result = sys.sp_getapplock @Resource=N'EWMS:GoodsReceipt',
+                    @LockMode='Exclusive', @LockOwner='Transaction', @LockTimeout=15000;
+                IF @result < 0 THROW 51001, 'Goods receipt is busy. Try again.', 1;");
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<AuthSession>(e =>
+            {
+                e.ToTable("AuthSession");
+                e.HasKey(x => x.Id);
+                e.HasIndex(x => new { x.UserId, x.ExpiresAt });
+                e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
 
             // PERMISSION
             modelBuilder.Entity<Permission>(e =>
@@ -58,7 +93,7 @@ namespace EWMS.Api.Data
                     .HasColumnType("varchar(100)").IsRequired();
                 e.HasIndex(x => x.PermissionName).IsUnique();
                 e.Property(x => x.Description)
-                    .HasColumnType("varchar(255)");
+                    .HasColumnType("nvarchar(255)");
             });
 
             // ROLE
@@ -70,7 +105,7 @@ namespace EWMS.Api.Data
                     .HasColumnType("varchar(50)").IsRequired();
                 e.HasIndex(x => x.RoleName).IsUnique();
                 e.Property(x => x.Description)
-                    .HasColumnType("varchar(255)");
+                    .HasColumnType("nvarchar(255)");
             });
 
             // ROLE PERMISSION
@@ -79,11 +114,11 @@ namespace EWMS.Api.Data
                 e.ToTable("RolePermission");
                 e.HasKey(x => new { x.RoleId, x.PermissionId });
 
-                e.HasOne<Role>().WithMany()
+                e.HasOne(x => x.Role).WithMany()
                     .HasForeignKey(x => x.RoleId)
                     .OnDelete(DeleteBehavior.NoAction);
 
-                e.HasOne<Permission>().WithMany()
+                e.HasOne(x => x.Permission).WithMany()
                     .HasForeignKey(x => x.PermissionId)
                     .OnDelete(DeleteBehavior.NoAction);
             });
@@ -101,15 +136,16 @@ namespace EWMS.Api.Data
                 e.Property(x => x.PasswordHash)
                     .HasColumnType("varchar(255)").IsRequired();
                 e.Property(x => x.FullName)
-                    .HasColumnType("varchar(100)").IsRequired();
+                    .HasColumnType("nvarchar(100)").IsRequired();
                 e.Property(x => x.Email)
                     .HasColumnType("varchar(100)").IsRequired();
                 e.Property(x => x.PhoneNumber)
                     .HasColumnType("varchar(20)");
                 e.Property(x => x.Status)
                     .HasColumnType("varchar(20)").IsRequired();
+                e.HasIndex(x => x.PhoneNumber).IsUnique();
 
-                e.HasOne<Role>().WithMany()
+                e.HasOne(x => x.Role).WithMany()
                     .HasForeignKey(x => x.RoleId)
                     .OnDelete(DeleteBehavior.NoAction);
             });
@@ -137,7 +173,7 @@ namespace EWMS.Api.Data
                 e.HasKey(x => x.Id);
 
                 e.Property(x => x.CategoryName)
-                    .HasColumnType("varchar(100)")
+                    .HasColumnType("nvarchar(100)")
                     .IsRequired();
 
                 e.HasIndex(x => x.CategoryName).IsUnique();
@@ -160,15 +196,15 @@ namespace EWMS.Api.Data
                 e.HasIndex(x => x.SupplierCode).IsUnique();
 
                 e.Property(x => x.SupplierName)
-                    .HasColumnType("varchar(100)").IsRequired();
+                    .HasColumnType("nvarchar(100)").IsRequired();
                 e.Property(x => x.ContactPerson)
-                    .HasColumnType("varchar(100)").IsRequired();
+                    .HasColumnType("nvarchar(100)").IsRequired();
                 e.Property(x => x.Email)
                     .HasColumnType("varchar(100)");
                 e.Property(x => x.PhoneNumber)
                     .HasColumnType("varchar(20)");
                 e.Property(x => x.Address)
-                    .HasColumnType("varchar(255)");
+                    .HasColumnType("nvarchar(255)");
                 e.Property(x => x.Status)
                     .HasColumnType("varchar(20)").IsRequired();
             });
@@ -184,7 +220,7 @@ namespace EWMS.Api.Data
                 e.HasIndex(x => x.ProductCode).IsUnique();
 
                 e.Property(x => x.ProductName)
-                    .HasColumnType("varchar(100)").IsRequired();
+                    .HasColumnType("nvarchar(100)").IsRequired();
                 e.Property(x => x.Brand)
                     .HasColumnType("varchar(100)").IsRequired();
                 e.Property(x => x.Model)
@@ -228,7 +264,7 @@ namespace EWMS.Api.Data
                 e.HasIndex(x => x.SKU).IsUnique();
 
                 e.Property(x => x.VariantName)
-                    .HasColumnType("varchar(100)");
+                    .HasColumnType("nvarchar(100)");
                 e.Property(x => x.Color)
                     .HasColumnType("varchar(50)");
                 e.Property(x => x.Capacity)
@@ -240,7 +276,7 @@ namespace EWMS.Api.Data
                 e.Property(x => x.SellingPrice)
                     .HasColumnType("decimal(18,2)");
                 e.Property(x => x.Specs)
-                    .HasColumnType("varchar(500)");
+                    .HasColumnType("nvarchar(500)");
 
                 e.HasOne(x => x.Product).WithMany()
                     .HasForeignKey(x => x.ProductId)
@@ -257,7 +293,7 @@ namespace EWMS.Api.Data
                     .HasColumnType("varchar(50)").IsRequired();
                 e.HasIndex(x => x.TypeCode).IsUnique();
                 e.Property(x => x.Description)
-                    .HasColumnType("varchar(255)");
+                    .HasColumnType("nvarchar(255)");
             });
 
             // WAREHOUSE
@@ -271,9 +307,9 @@ namespace EWMS.Api.Data
                 e.HasIndex(x => x.WarehouseCode).IsUnique();
 
                 e.Property(x => x.WarehouseName)
-                    .HasColumnType("varchar(100)").IsRequired();
+                    .HasColumnType("nvarchar(100)").IsRequired();
                 e.Property(x => x.Address)
-                    .HasColumnType("varchar(255)").IsRequired();
+                    .HasColumnType("nvarchar(255)").IsRequired();
                 e.Property(x => x.PhoneNumber)
                     .HasColumnType("varchar(20)");
                 e.Property(x => x.Area)
@@ -297,7 +333,7 @@ namespace EWMS.Api.Data
                 e.Property(x => x.SectionCode)
                     .HasColumnType("varchar(50)").IsRequired();
                 e.Property(x => x.SectionName)
-                    .HasColumnType("varchar(100)").IsRequired();
+                    .HasColumnType("nvarchar(100)").IsRequired();
 
                 e.HasOne(x => x.Warehouse).WithMany()
                     .HasForeignKey(x => x.WarehouseId)
@@ -339,7 +375,7 @@ namespace EWMS.Api.Data
                 e.Property(x => x.BinCode)
                     .HasColumnType("varchar(50)").IsRequired();
                 e.Property(x => x.BinName)
-                    .HasColumnType("varchar(100)").IsRequired();
+                    .HasColumnType("nvarchar(100)").IsRequired();
                 e.Property(x => x.MaxWeightKg)
                     .HasColumnType("decimal(10,2)");
 
@@ -379,7 +415,11 @@ namespace EWMS.Api.Data
                 e.Property(x => x.ExpectedDeliveryDate)
                     .HasColumnType("datetime2");
                 e.Property(x => x.RejectionReason)
-                    .HasColumnType("varchar(255)");
+                    .HasColumnType("nvarchar(255)");
+                e.Property(x => x.ApprovalNote)
+                    .HasColumnType("nvarchar(255)");
+                e.Property(x => x.DecisionDate)
+                    .HasColumnType("datetime2");
                 e.Property(x => x.Status)
                     .HasColumnType("varchar(30)").IsRequired();
                 e.Property(x => x.CreatedDate)
@@ -397,6 +437,10 @@ namespace EWMS.Api.Data
                     .HasForeignKey(x => x.RequestedByUserId)
                     .OnDelete(DeleteBehavior.NoAction);
 
+                e.HasOne(x => x.AssignedStaffUser).WithMany()
+                    .HasForeignKey(x => x.AssignedStaffUserId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
                 e.HasOne(x => x.ApprovedByUser).WithMany()
                     .HasForeignKey(x => x.ApprovedByUserId)
                     .OnDelete(DeleteBehavior.NoAction);
@@ -407,6 +451,7 @@ namespace EWMS.Api.Data
             {
                 e.ToTable("InboundRequestItem");
                 e.HasKey(x => x.Id);
+                e.HasAlternateKey(x => new { x.Id, x.InboundRequestId });
 
                 e.HasOne(x => x.InboundRequest).WithMany()
                     .HasForeignKey(x => x.InboundRequestId)
@@ -414,6 +459,19 @@ namespace EWMS.Api.Data
 
                 e.HasOne(x => x.ProductVariant).WithMany()
                     .HasForeignKey(x => x.ProductVariantId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            modelBuilder.Entity<InboundExpectedSerial>(e =>
+            {
+                e.ToTable("InboundExpectedSerial");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.SerialCode).HasColumnType("varchar(100)").IsRequired();
+                e.HasIndex(x => new { x.InboundRequestId, x.SerialCode }).IsUnique();
+                // FK kép không cho gắn dòng của Inbound A vào bảng kê Inbound B.
+                e.HasOne(x => x.InboundRequestItem).WithMany()
+                    .HasForeignKey(x => new { x.InboundRequestItemId, x.InboundRequestId })
+                    .HasPrincipalKey(x => new { x.Id, x.InboundRequestId })
                     .OnDelete(DeleteBehavior.NoAction);
             });
 
@@ -430,7 +488,11 @@ namespace EWMS.Api.Data
                 e.Property(x => x.ApprovalDate)
                     .HasColumnType("datetime2");
                 e.Property(x => x.RejectionReason)
-                    .HasColumnType("varchar(255)");
+                    .HasColumnType("nvarchar(255)");
+                e.Property(x => x.ApprovalNote)
+                    .HasColumnType("nvarchar(255)");
+                e.Property(x => x.Version).IsRowVersion();
+                e.Property(x => x.UpdatedAt).HasColumnType("datetime2");
 
                 e.HasOne(x => x.InboundRequest).WithMany()
                     .HasForeignKey(x => x.InboundRequestId)
@@ -451,7 +513,8 @@ namespace EWMS.Api.Data
                 e.ToTable("GoodsReceiptItem");
                 e.HasKey(x => x.Id);
 
-                e.HasOne(x => x.GoodsReceipt).WithMany()
+                e.HasAlternateKey(x => new { x.Id, x.GoodsReceiptId });
+                e.HasOne(x => x.GoodsReceipt).WithMany(x => x.Items)
                     .HasForeignKey(x => x.GoodsReceiptId)
                     .OnDelete(DeleteBehavior.NoAction);
 
@@ -462,6 +525,20 @@ namespace EWMS.Api.Data
                 e.HasOne(x => x.Bin).WithMany()
                     .HasForeignKey(x => x.BinId)
                     .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            modelBuilder.Entity<GoodsReceiptSerial>(e =>
+            {
+                e.ToTable("GoodsReceiptSerial");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.SerialCode).HasColumnType("varchar(100)").IsRequired();
+                e.HasIndex(x => new { x.GoodsReceiptId, x.SerialCode }).IsUnique();
+                e.HasOne(x => x.GoodsReceiptItem).WithMany(x => x.Serials)
+                    .HasForeignKey(x => new { x.GoodsReceiptItemId, x.GoodsReceiptId })
+                    .HasPrincipalKey(x => new { x.Id, x.GoodsReceiptId })
+                    .OnDelete(DeleteBehavior.NoAction);
+                e.HasOne(x => x.ScannedByUser).WithMany()
+                    .HasForeignKey(x => x.ScannedByUserId).OnDelete(DeleteBehavior.NoAction);
             });
 
             // SERIAL NUMBER
@@ -489,8 +566,358 @@ namespace EWMS.Api.Data
                     .HasForeignKey(x => x.CurrentBinId)
                     .OnDelete(DeleteBehavior.NoAction);
 
-                // Hai cột liên quan Outbound được giữ lại,
-                // nhưng chưa tạo FK vì chưa có bảng Outbound.
+                e.HasOne(x => x.ReservedForOutboundItem)
+                    .WithMany(x => x.ReservedSerialNumbers)
+                    .HasForeignKey(x => x.ReservedForOutboundItemId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.DispatchedInDeliveryItem)
+                    .WithMany(x => x.DispatchedSerialNumbers)
+                    .HasForeignKey(x => x.DispatchedInDeliveryItemId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // TransferOrder
+            modelBuilder.Entity<TransferOrder>(e =>
+            {
+                e.ToTable("TransferOrder");
+                e.HasKey(x => x.Id);
+
+                e.Property(x => x.Status)
+                    .HasColumnType("varchar(30)").IsRequired();
+
+                e.Property(x => x.CreatedDate)
+                    .HasColumnType("datetime2").IsRequired();
+
+                e.HasOne(x => x.FromWarehouse).WithMany()
+                    .HasForeignKey(x => x.FromWarehouseId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.ToWarehouse).WithMany()
+                    .HasForeignKey(x => x.ToWarehouseId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.RequestedByUser).WithMany()
+                    .HasForeignKey(x => x.RequestedByUserId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.ApprovedByUser).WithMany()
+                    .HasForeignKey(x => x.ApprovedByUserId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.DestinationStaffUser).WithMany()
+                    .HasForeignKey(x => x.DestinationStaffUserId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // TransferOrderItem
+            modelBuilder.Entity<TransferOrderItem>(e =>
+            {
+                e.ToTable("TransferOrderItem");
+                e.HasKey(x => x.Id);
+
+                e.Property(x => x.DiscrepancyNote)
+                    .HasColumnType("varchar(255)");
+
+                e.HasOne(x => x.TransferOrder).WithMany(x => x.Items)
+                    .HasForeignKey(x => x.TransferOrderId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.ProductVariant).WithMany()
+                    .HasForeignKey(x => x.ProductVariantId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.FromBin).WithMany()
+                    .HasForeignKey(x => x.FromBinId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.ToBin).WithMany()
+                    .HasForeignKey(x => x.ToBinId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // TransferOrderSerial
+            modelBuilder.Entity<TransferOrderSerial>(e =>
+            {
+                e.ToTable("TransferOrderSerial");
+                e.HasKey(x => x.Id);
+
+                e.Property(x => x.Status)
+                    .HasColumnType("varchar(30)").IsRequired();
+
+                e.Property(x => x.DispatchedAt)
+                    .HasColumnType("datetime2");
+
+                e.Property(x => x.ReceivedAt)
+                    .HasColumnType("datetime2");
+
+                e.HasOne(x => x.TransferOrderItem).WithMany(x => x.Serials)
+                    .HasForeignKey(x => x.TransferOrderItemId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.SerialNumber).WithMany()
+                    .HasForeignKey(x => x.SerialNumberId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // InventorySheet
+            modelBuilder.Entity<InventorySheet>(e =>
+            {
+                e.ToTable("InventorySheet");
+                e.HasKey(x => x.Id);
+
+                e.Property(x => x.Status)
+                    .HasColumnType("varchar(30)").IsRequired();
+
+                e.Property(x => x.RejectionReason)
+                    .HasColumnType("varchar(255)");
+
+                e.Property(x => x.CreatedDate)
+                    .HasColumnType("datetime2").IsRequired();
+
+                e.HasOne(x => x.Warehouse).WithMany()
+                    .HasForeignKey(x => x.WarehouseId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.CreatedByUser).WithMany()
+                    .HasForeignKey(x => x.CreatedByUserId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.ApprovedByUser).WithMany()
+                    .HasForeignKey(x => x.ApprovedByUserId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // InventorySheetItem
+            modelBuilder.Entity<InventorySheetItem>(e =>
+            {
+                e.ToTable("InventorySheetItem");
+                e.HasKey(x => x.Id);
+
+                e.Property(x => x.Note)
+                    .HasColumnType("varchar(255)");
+
+                e.HasOne(x => x.InventorySheet).WithMany(x => x.Items)
+                    .HasForeignKey(x => x.InventorySheetId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.Bin).WithMany()
+                    .HasForeignKey(x => x.BinId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.ProductVariant).WithMany()
+                    .HasForeignKey(x => x.ProductVariantId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // InventorySheetTrack
+            modelBuilder.Entity<InventorySheetTrack>(e =>
+            {
+                e.ToTable("InventorySheetTrack");
+                e.HasKey(x => x.Id);
+
+                e.Property(x => x.Note)
+                    .HasColumnType("varchar(255)");
+
+                e.Property(x => x.CountedAt)
+                    .HasColumnType("datetime2").IsRequired();
+
+                e.HasOne(x => x.InventorySheetItem).WithMany(x => x.Tracks)
+                    .HasForeignKey(x => x.InventorySheetItemId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.CountedByUser).WithMany()
+                    .HasForeignKey(x => x.CountedByUserId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // InventorySheetSerial
+            modelBuilder.Entity<InventorySheetSerial>(e =>
+            {
+                e.ToTable("InventorySheetSerial");
+                e.HasKey(x => x.Id);
+
+                e.Property(x => x.ResultStatus)
+                    .HasColumnType("varchar(30)").IsRequired();
+
+                e.Property(x => x.ScannedAt)
+                    .HasColumnType("datetime2");
+
+                e.HasOne(x => x.InventorySheet).WithMany(x => x.Serials)
+                    .HasForeignKey(x => x.InventorySheetId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.SerialNumber).WithMany()
+                    .HasForeignKey(x => x.SerialNumberId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.ExpectedBin).WithMany()
+                    .HasForeignKey(x => x.ExpectedBinId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.ScannedBin).WithMany()
+                    .HasForeignKey(x => x.ScannedBinId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.CountedByUser).WithMany()
+                    .HasForeignKey(x => x.CountedByUserId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // OutboundRequest
+            modelBuilder.Entity<OutboundRequest>(e =>
+            {
+                e.ToTable("OutboundRequest");
+                e.HasKey(x => x.Id);
+
+                e.Property(x => x.CustomerName)
+                    .HasColumnType("varchar(100)");
+
+                e.Property(x => x.CustomerEmail)
+                    .HasColumnType("varchar(100)");
+
+                e.Property(x => x.CustomerPhone)
+                    .HasColumnType("varchar(20)");
+
+                e.Property(x => x.DestinationAddress)
+                    .HasColumnType("varchar(255)");
+
+                e.Property(x => x.Reason)
+                    .HasColumnType("varchar(255)");
+
+                e.Property(x => x.RejectionReason)
+                    .HasColumnType("varchar(255)");
+
+                e.Property(x => x.Status)
+                    .HasColumnType("varchar(30)").IsRequired();
+
+                e.Property(x => x.CreatedDate)
+                    .HasColumnType("datetime2").IsRequired();
+
+                e.HasOne(x => x.Warehouse).WithMany()
+                    .HasForeignKey(x => x.WarehouseId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.RequestedByUser).WithMany()
+                    .HasForeignKey(x => x.RequestedByUserId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.ApprovedByUser).WithMany()
+                    .HasForeignKey(x => x.ApprovedByUserId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // OutboundRequestItem
+            modelBuilder.Entity<OutboundRequestItem>(e =>
+            {
+                e.ToTable("OutboundRequestItem");
+                e.HasKey(x => x.Id);
+
+                e.HasOne(x => x.OutboundRequest).WithMany(x => x.Items)
+                    .HasForeignKey(x => x.OutboundRequestId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.ProductVariant).WithMany()
+                    .HasForeignKey(x => x.ProductVariantId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // DeliveryOrder
+            modelBuilder.Entity<DeliveryOrder>(e =>
+            {
+                e.ToTable("DeliveryOrder");
+                e.HasKey(x => x.Id);
+
+                e.Property(x => x.DeliveryDate)
+                    .HasColumnType("datetime2");
+
+                e.Property(x => x.Status)
+                    .HasColumnType("varchar(30)").IsRequired();
+
+                e.HasOne(x => x.OutboundRequest).WithMany(x => x.DeliveryOrders)
+                    .HasForeignKey(x => x.OutboundRequestId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.CreatedByUser).WithMany()
+                    .HasForeignKey(x => x.CreatedByUserId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // DeliveryOrderItem
+            modelBuilder.Entity<DeliveryOrderItem>(e =>
+            {
+                e.ToTable("DeliveryOrderItem");
+                e.HasKey(x => x.Id);
+
+                e.HasOne(x => x.DeliveryOrder).WithMany(x => x.Items)
+                    .HasForeignKey(x => x.DeliveryOrderId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.ProductVariant).WithMany()
+                    .HasForeignKey(x => x.ProductVariantId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.Bin).WithMany()
+                    .HasForeignKey(x => x.BinId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // SerialMovement
+            modelBuilder.Entity<SerialMovement>(e =>
+            {
+                e.ToTable("SerialMovement");
+                e.HasKey(x => x.Id);
+
+                e.Property(x => x.MovementType)
+                    .HasColumnType("varchar(50)").IsRequired();
+
+                e.Property(x => x.RefType)
+                    .HasColumnType("varchar(50)");
+
+                e.Property(x => x.MovementDate)
+                    .HasColumnType("datetime2").IsRequired();
+
+                e.HasOne(x => x.SerialNumber).WithMany()
+                    .HasForeignKey(x => x.SerialNumberId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.FromBin).WithMany()
+                    .HasForeignKey(x => x.FromBinId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.ToBin).WithMany()
+                    .HasForeignKey(x => x.ToBinId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                e.HasOne(x => x.PerformedByUser).WithMany()
+                    .HasForeignKey(x => x.PerformedByUserId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // AuditLog
+            modelBuilder.Entity<AuditLog>(e =>
+            {
+                e.ToTable("AuditLog");
+                e.HasKey(x => x.Id);
+
+                e.Property(x => x.Action)
+                    .HasColumnType("varchar(100)").IsRequired();
+
+                e.Property(x => x.EntityName)
+                    .HasColumnType("varchar(100)").IsRequired();
+
+                e.Property(x => x.OldValue)
+                    .HasColumnType("text");
+
+                e.Property(x => x.NewValue)
+                    .HasColumnType("text");
+
+                e.Property(x => x.CreatedAt)
+                    .HasColumnType("datetime2").IsRequired();
+
+                e.HasOne(x => x.User).WithMany()
+                    .HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.NoAction);
             });
         }
     }

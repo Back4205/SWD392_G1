@@ -1,5 +1,4 @@
 ﻿
-using System.Collections.Generic;
 
 namespace EWMS.Api.DTOs.InboundRequests
 {
@@ -9,7 +8,7 @@ namespace EWMS.Api.DTOs.InboundRequests
 
         public int TotalExpectedQty { get; set; }
 
-        // Nullable until valid Goods Receipt statuses are agreed
+        // Giữ kiểu nullable để tương thích contract cũ; service hiện trả số tính từ receipt Approved.
         public int? TotalReceivedQty { get; set; }
 
         public int? RemainingQty { get; set; }

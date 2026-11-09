@@ -3,7 +3,7 @@
 **/obj/
 **/node_modules/
 **/dist/
-
+NGUOI_5_GOODS_RECEIPT_AGENT_GUIDE.md
 *.user
 *.suo
 
@@ -11,3 +11,7 @@
 **/.env.*
 !**/.env.example
 **/appsettings.Development.json
+# Local signing keys and process logs
+**/.local/
+# Nested repository clone
+SWD392_G1/

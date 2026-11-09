@@ -1,8 +1,14 @@
-﻿
+
 namespace EWMS.Api.Entities
 {
     public class SerialNumber
     {
+        public void UpdateStatus(string status)
+        {
+            if (string.IsNullOrWhiteSpace(status)) throw new ArgumentException("Serial status is required.", nameof(status));
+            CurrentStatus = status;
+        }
+
         public int Id { get; set; }
 
         public int ProductVariantId { get; set; }
@@ -24,5 +30,9 @@ namespace EWMS.Api.Entities
         public GoodsReceiptItem? OriginGoodsReceiptItem { get; set; }
 
         public StorageBin? CurrentBin { get; set; }
+
+        public OutboundRequestItem? ReservedForOutboundItem { get; set; }
+
+        public DeliveryOrderItem? DispatchedInDeliveryItem { get; set; }
     }
 }

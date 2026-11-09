@@ -33,15 +33,6 @@
   color: #245ac9;
 }
 
-.app-brand-mark svg {
-  width: 30px;
-  height: 30px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  stroke-linejoin: round;
-}
-
 .app-brand strong {
   display: block;
   font-size: 26px;
@@ -94,17 +85,6 @@
   cursor: pointer;
 }
 
-.app-nav-item svg {
-  width: 21px;
-  height: 21px;
-  flex-shrink: 0;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
 .app-nav-item:hover {
   background: #f4f7fb;
 }
@@ -112,11 +92,6 @@
 .app-nav-item.active {
   color: #245ac9;
   background: #eaf1ff;
-}
-
-.app-nav-item:disabled {
-  opacity: .6;
-  cursor: wait;
 }
 
 .app-sidebar-footer {

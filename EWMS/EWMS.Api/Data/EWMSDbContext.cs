@@ -93,7 +93,7 @@ namespace EWMS.Api.Data
                     .HasColumnType("varchar(100)").IsRequired();
                 e.HasIndex(x => x.PermissionName).IsUnique();
                 e.Property(x => x.Description)
-                    .HasColumnType("varchar(255)");
+                    .HasColumnType("nvarchar(255)");
             });
 
             // ROLE
@@ -105,7 +105,7 @@ namespace EWMS.Api.Data
                     .HasColumnType("varchar(50)").IsRequired();
                 e.HasIndex(x => x.RoleName).IsUnique();
                 e.Property(x => x.Description)
-                    .HasColumnType("varchar(255)");
+                    .HasColumnType("nvarchar(255)");
             });
 
             // ROLE PERMISSION
@@ -136,7 +136,7 @@ namespace EWMS.Api.Data
                 e.Property(x => x.PasswordHash)
                     .HasColumnType("varchar(255)").IsRequired();
                 e.Property(x => x.FullName)
-                    .HasColumnType("varchar(100)").IsRequired();
+                    .HasColumnType("nvarchar(100)").IsRequired();
                 e.Property(x => x.Email)
                     .HasColumnType("varchar(100)").IsRequired();
                 e.Property(x => x.PhoneNumber)
@@ -173,7 +173,7 @@ namespace EWMS.Api.Data
                 e.HasKey(x => x.Id);
 
                 e.Property(x => x.CategoryName)
-                    .HasColumnType("varchar(100)")
+                    .HasColumnType("nvarchar(100)")
                     .IsRequired();
 
                 e.HasIndex(x => x.CategoryName).IsUnique();
@@ -196,15 +196,15 @@ namespace EWMS.Api.Data
                 e.HasIndex(x => x.SupplierCode).IsUnique();
 
                 e.Property(x => x.SupplierName)
-                    .HasColumnType("varchar(100)").IsRequired();
+                    .HasColumnType("nvarchar(100)").IsRequired();
                 e.Property(x => x.ContactPerson)
-                    .HasColumnType("varchar(100)").IsRequired();
+                    .HasColumnType("nvarchar(100)").IsRequired();
                 e.Property(x => x.Email)
                     .HasColumnType("varchar(100)");
                 e.Property(x => x.PhoneNumber)
                     .HasColumnType("varchar(20)");
                 e.Property(x => x.Address)
-                    .HasColumnType("varchar(255)");
+                    .HasColumnType("nvarchar(255)");
                 e.Property(x => x.Status)
                     .HasColumnType("varchar(20)").IsRequired();
             });
@@ -220,7 +220,7 @@ namespace EWMS.Api.Data
                 e.HasIndex(x => x.ProductCode).IsUnique();
 
                 e.Property(x => x.ProductName)
-                    .HasColumnType("varchar(100)").IsRequired();
+                    .HasColumnType("nvarchar(100)").IsRequired();
                 e.Property(x => x.Brand)
                     .HasColumnType("varchar(100)").IsRequired();
                 e.Property(x => x.Model)
@@ -264,7 +264,7 @@ namespace EWMS.Api.Data
                 e.HasIndex(x => x.SKU).IsUnique();
 
                 e.Property(x => x.VariantName)
-                    .HasColumnType("varchar(100)");
+                    .HasColumnType("nvarchar(100)");
                 e.Property(x => x.Color)
                     .HasColumnType("varchar(50)");
                 e.Property(x => x.Capacity)
@@ -276,7 +276,7 @@ namespace EWMS.Api.Data
                 e.Property(x => x.SellingPrice)
                     .HasColumnType("decimal(18,2)");
                 e.Property(x => x.Specs)
-                    .HasColumnType("varchar(500)");
+                    .HasColumnType("nvarchar(500)");
 
                 e.HasOne(x => x.Product).WithMany()
                     .HasForeignKey(x => x.ProductId)
@@ -293,7 +293,7 @@ namespace EWMS.Api.Data
                     .HasColumnType("varchar(50)").IsRequired();
                 e.HasIndex(x => x.TypeCode).IsUnique();
                 e.Property(x => x.Description)
-                    .HasColumnType("varchar(255)");
+                    .HasColumnType("nvarchar(255)");
             });
 
             // WAREHOUSE
@@ -307,9 +307,9 @@ namespace EWMS.Api.Data
                 e.HasIndex(x => x.WarehouseCode).IsUnique();
 
                 e.Property(x => x.WarehouseName)
-                    .HasColumnType("varchar(100)").IsRequired();
+                    .HasColumnType("nvarchar(100)").IsRequired();
                 e.Property(x => x.Address)
-                    .HasColumnType("varchar(255)").IsRequired();
+                    .HasColumnType("nvarchar(255)").IsRequired();
                 e.Property(x => x.PhoneNumber)
                     .HasColumnType("varchar(20)");
                 e.Property(x => x.Area)
@@ -333,7 +333,7 @@ namespace EWMS.Api.Data
                 e.Property(x => x.SectionCode)
                     .HasColumnType("varchar(50)").IsRequired();
                 e.Property(x => x.SectionName)
-                    .HasColumnType("varchar(100)").IsRequired();
+                    .HasColumnType("nvarchar(100)").IsRequired();
 
                 e.HasOne(x => x.Warehouse).WithMany()
                     .HasForeignKey(x => x.WarehouseId)
@@ -375,7 +375,7 @@ namespace EWMS.Api.Data
                 e.Property(x => x.BinCode)
                     .HasColumnType("varchar(50)").IsRequired();
                 e.Property(x => x.BinName)
-                    .HasColumnType("varchar(100)").IsRequired();
+                    .HasColumnType("nvarchar(100)").IsRequired();
                 e.Property(x => x.MaxWeightKg)
                     .HasColumnType("decimal(10,2)");
 

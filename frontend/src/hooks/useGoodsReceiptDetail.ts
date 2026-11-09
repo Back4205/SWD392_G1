@@ -94,21 +94,31 @@ export default function useGoodsReceiptDetail(receiptId: number, session: Receip
     // Duplicate cũng là 409, nhưng không phải stale: giữ dòng scan và lựa chọn bin.
   }
 
-  async function handleScan() {
-    if (!receipt || !selectedItem || !serialCode || !beginWrite()) return;
+  async function handleScanForItem(itemId: number, code: string) {
+    const trimmed = code.trim();
+    if (!receipt || !trimmed || !beginWrite()) return;
+    const targetItem = receipt.items.find(item => item.id === itemId);
+    if (!targetItem) {
+      finishWrite();
+      return;
+    }
     try {
-      await addReceiptSerial(receipt.id, selectedItem.id, receipt.version, serialCode, selectedItem.sku);
+      await addReceiptSerial(receipt.id, targetItem.id, receipt.version, trimmed, targetItem.sku);
       const latest = await getGoodsReceipt(receipt.id);
       setReceipt(latest);
-      // Giữ binChoices riêng để một lần scan không làm mất bin chưa lưu.
       setSerialCode("");
-      setNotice(`Đã lưu serial. Phiếu hiện có ${latest.items.reduce((total, item) => total + item.receivedQty, 0)} thiết bị.`);
+      setNotice(`Đã lưu serial [${trimmed}] cho thiết bị của sản phẩm ${targetItem.productName || targetItem.sku}.`);
     } catch (err) {
       await handleWriteError(err);
     } finally {
       finishWrite();
       setTimeout(() => scanInput.current?.focus(), 0);
     }
+  }
+
+  async function handleScan() {
+    if (!selectedItem || !serialCode) return;
+    await handleScanForItem(selectedItem.id, serialCode);
   }
 
   async function handleSave() {
@@ -166,6 +176,6 @@ export default function useGoodsReceiptDetail(receiptId: number, session: Receip
     serialCode, setSerialCode, loading, error, binError, notice, decision, setDecision,
     scanInput, editable, canDecide, quantity, placementComplete, binsChanged,
     reload: () => setReloadKey(value => value + 1),
-    handleScan, handleSave, handleSubmit, handleDecision,
+    handleScan, handleScanForItem, handleSave, handleSubmit, handleDecision,
   };
 }

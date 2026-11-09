@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { changePassword } from "./auth.api";
-import { roleLabel, type AuthUser } from "./auth.types";
+import { displayUserName, roleLabel, type AuthUser } from "./auth.types";
 interface Props { user: AuthUser; onPasswordChanged: () => void; }
 export default function ProfilePage({ user, onPasswordChanged }: Props) {
   const [current, setCurrent] = useState("");
@@ -17,7 +17,7 @@ export default function ProfilePage({ user, onPasswordChanged }: Props) {
     finally { setBusy(false); }
   }
   return <><header className="gr-page-heading"><div><p className="gr-eyebrow">TÀI KHOẢN</p><h1>Thông tin cá nhân</h1><p>Thông tin đăng nhập và quyền được quản trị viên phân công.</p></div></header>
-    <div className="profile-grid"><section className="gr-panel profile-card"><h2>Hồ sơ làm việc</h2><dl><dt>Họ và tên</dt><dd>{user.fullName}</dd><dt>Tên đăng nhập</dt><dd>{user.userName}</dd><dt>Vai trò</dt><dd>{roleLabel(user.role)}</dd><dt>Kho được phân công</dt><dd>{user.warehouseIds.length ? user.warehouseIds.map(id => `Kho #${id}`).join(", ") : "Chưa được phân công kho"}</dd></dl></section>
+    <div className="profile-grid"><section className="gr-panel profile-card"><h2>Hồ sơ làm việc</h2><dl><dt>Họ và tên</dt><dd>{displayUserName(user)}</dd><dt>Tên đăng nhập</dt><dd>{user.userName}</dd><dt>Vai trò</dt><dd>{roleLabel(user.role)}</dd><dt>Kho được phân công</dt><dd>{user.warehouseIds.length ? user.warehouseIds.map(id => `Kho #${id}`).join(", ") : "Chưa được phân công kho"}</dd></dl></section>
     <section className="gr-panel profile-card"><h2>Đổi mật khẩu</h2><p>Sau khi đổi mật khẩu, tất cả phiên đăng nhập sẽ kết thúc. Bạn cần đăng nhập lại.</p>
       {error && <div className="gr-alert gr-alert--error" role="alert">{error}</div>}
       <form className="auth-form" onSubmit={event => void submit(event)}>

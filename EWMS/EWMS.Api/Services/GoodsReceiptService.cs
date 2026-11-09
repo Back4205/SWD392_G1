@@ -517,6 +517,7 @@ namespace EWMS.Api.Services
                     Id = item.Id,
                     ProductVariantId = item.ProductVariantId,
                     SKU = item.ProductVariant.SKU,
+                    ProductName = item.ProductVariant.Product?.ProductName ?? item.ProductVariant.SKU,
                     BinId = item.BinId,
                     ReceivedQty = item.ReceivedQty,
                     ExpectedQty = line.ExpectedQty,

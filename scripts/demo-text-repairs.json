@@ -1,0 +1,695 @@
+[
+  {
+    "table": "Supplier",
+    "keyColumn": "SupplierCode",
+    "keyValue": "SUP-APPLE",
+    "column": "SupplierName",
+    "correctValue": "Apple Distribution Vietnam"
+  },
+  {
+    "table": "Supplier",
+    "keyColumn": "SupplierCode",
+    "keyValue": "SUP-APPLE",
+    "column": "ContactPerson",
+    "correctValue": "Nguyễn Văn Đại Diện"
+  },
+  {
+    "table": "Supplier",
+    "keyColumn": "SupplierCode",
+    "keyValue": "SUP-APPLE",
+    "column": "Address",
+    "correctValue": "Quận 1, TP Hồ Chí Minh"
+  },
+  {
+    "table": "Supplier",
+    "keyColumn": "SupplierCode",
+    "keyValue": "SUP-SAMSUNG",
+    "column": "SupplierName",
+    "correctValue": "Samsung Electronics Vietnam"
+  },
+  {
+    "table": "Supplier",
+    "keyColumn": "SupplierCode",
+    "keyValue": "SUP-SAMSUNG",
+    "column": "ContactPerson",
+    "correctValue": "Trần Thị Kim Loan"
+  },
+  {
+    "table": "Supplier",
+    "keyColumn": "SupplierCode",
+    "keyValue": "SUP-SAMSUNG",
+    "column": "Address",
+    "correctValue": "Khu Công nghệ cao, TP Thủ Đức, TP Hồ Chí Minh"
+  },
+  {
+    "table": "Supplier",
+    "keyColumn": "SupplierCode",
+    "keyValue": "SUP-SONY",
+    "column": "SupplierName",
+    "correctValue": "Sony Electronics Vietnam"
+  },
+  {
+    "table": "Supplier",
+    "keyColumn": "SupplierCode",
+    "keyValue": "SUP-SONY",
+    "column": "ContactPerson",
+    "correctValue": "Lê Hoàng Long"
+  },
+  {
+    "table": "Supplier",
+    "keyColumn": "SupplierCode",
+    "keyValue": "SUP-SONY",
+    "column": "Address",
+    "correctValue": "Tầng 6, President Place, 93 Nguyễn Du, Q1, TP HCM"
+  },
+  {
+    "table": "Supplier",
+    "keyColumn": "SupplierCode",
+    "keyValue": "SUP-DELL",
+    "column": "SupplierName",
+    "correctValue": "Dell Global B.V. Vietnam"
+  },
+  {
+    "table": "Supplier",
+    "keyColumn": "SupplierCode",
+    "keyValue": "SUP-DELL",
+    "column": "ContactPerson",
+    "correctValue": "Phạm Quốc Hưng"
+  },
+  {
+    "table": "Supplier",
+    "keyColumn": "SupplierCode",
+    "keyValue": "SUP-DELL",
+    "column": "Address",
+    "correctValue": "Tòa nhà Landmark 81, Bình Thạnh, TP Hồ Chí Minh"
+  },
+  {
+    "table": "Supplier",
+    "keyColumn": "SupplierCode",
+    "keyValue": "SUP-ASUS",
+    "column": "SupplierName",
+    "correctValue": "Asus Technology Vietnam"
+  },
+  {
+    "table": "Supplier",
+    "keyColumn": "SupplierCode",
+    "keyValue": "SUP-ASUS",
+    "column": "ContactPerson",
+    "correctValue": "Vũ Minh Tuấn"
+  },
+  {
+    "table": "Supplier",
+    "keyColumn": "SupplierCode",
+    "keyValue": "SUP-ASUS",
+    "column": "Address",
+    "correctValue": "Tầng 8, Tòa nhà Viettel, 285 Cách Mạng Tháng 8, Q10, TP HCM"
+  },
+  {
+    "table": "Category",
+    "keyColumn": "CategoryName",
+    "keyValue": "Thiết bị di động",
+    "column": "CategoryName",
+    "correctValue": "Thiết bị di động"
+  },
+  {
+    "table": "Category",
+    "keyColumn": "CategoryName",
+    "keyValue": "Máy tính xách tay",
+    "column": "CategoryName",
+    "correctValue": "Máy tính xách tay"
+  },
+  {
+    "table": "Category",
+    "keyColumn": "CategoryName",
+    "keyValue": "Máy tính bảng",
+    "column": "CategoryName",
+    "correctValue": "Máy tính bảng"
+  },
+  {
+    "table": "Category",
+    "keyColumn": "CategoryName",
+    "keyValue": "Thiết bị âm thanh",
+    "column": "CategoryName",
+    "correctValue": "Thiết bị âm thanh"
+  },
+  {
+    "table": "Category",
+    "keyColumn": "CategoryName",
+    "keyValue": "Màn hình & Phụ kiện",
+    "column": "CategoryName",
+    "correctValue": "Màn hình & Phụ kiện"
+  },
+  {
+    "table": "Product",
+    "keyColumn": "ProductCode",
+    "keyValue": "PRD-IP15P",
+    "column": "ProductName",
+    "correctValue": "iPhone 15 Pro Max 256GB"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "IP15P-256-TI",
+    "column": "VariantName",
+    "correctValue": "Titan Tự Nhiên 256GB"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "IP15P-256-TI",
+    "column": "Specs",
+    "correctValue": "A17 Pro, 6.7 inch Super Retina XDR"
+  },
+  {
+    "table": "Product",
+    "keyColumn": "ProductCode",
+    "keyValue": "PRD-IP15",
+    "column": "ProductName",
+    "correctValue": "iPhone 15 128GB"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "IP15-128-BLK",
+    "column": "VariantName",
+    "correctValue": "Đen 128GB"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "IP15-128-BLK",
+    "column": "Specs",
+    "correctValue": "A16 Bionic, 6.1 inch OLED Super Retina XDR"
+  },
+  {
+    "table": "Product",
+    "keyColumn": "ProductCode",
+    "keyValue": "PRD-IP16P",
+    "column": "ProductName",
+    "correctValue": "iPhone 16 Pro 256GB"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "IP16P-256-DES",
+    "column": "VariantName",
+    "correctValue": "Sa Mạc Titan 256GB"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "IP16P-256-DES",
+    "column": "Specs",
+    "correctValue": "A18 Pro, Camera Control, 6.3 inch 120Hz"
+  },
+  {
+    "table": "Product",
+    "keyColumn": "ProductCode",
+    "keyValue": "PRD-SS24U",
+    "column": "ProductName",
+    "correctValue": "Samsung Galaxy S24 Ultra"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "SS24U-512-GRY",
+    "column": "VariantName",
+    "correctValue": "Xám Titan 512GB"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "SS24U-512-GRY",
+    "column": "Specs",
+    "correctValue": "Snapdragon 8 Gen 3, S-Pen, Camera 200MP"
+  },
+  {
+    "table": "Product",
+    "keyColumn": "ProductCode",
+    "keyValue": "PRD-SS24",
+    "column": "ProductName",
+    "correctValue": "Samsung Galaxy S24 256GB"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "SS24-256-YEL",
+    "column": "VariantName",
+    "correctValue": "Vàng Amber 256GB"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "SS24-256-YEL",
+    "column": "Specs",
+    "correctValue": "Exynos 2400, 6.2 inch Dynamic AMOLED 2X"
+  },
+  {
+    "table": "Product",
+    "keyColumn": "ProductCode",
+    "keyValue": "PRD-SSFOLD5",
+    "column": "ProductName",
+    "correctValue": "Samsung Galaxy Z Fold5"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "ZFOLD5-256-BLU",
+    "column": "VariantName",
+    "correctValue": "Xanh Icy 256GB"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "ZFOLD5-256-BLU",
+    "column": "Specs",
+    "correctValue": "Màn gập 7.6 inch 120Hz, Snapdragon 8 Gen 2"
+  },
+  {
+    "table": "Product",
+    "keyColumn": "ProductCode",
+    "keyValue": "PRD-MBP14",
+    "column": "ProductName",
+    "correctValue": "MacBook Pro 14 M3 Pro"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "MBP14-M3P-18-512",
+    "column": "VariantName",
+    "correctValue": "Đen Không Gian 18GB/512GB"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "MBP14-M3P-18-512",
+    "column": "Specs",
+    "correctValue": "Apple M3 Pro 11-core CPU, 14-core GPU, Liquid Retina XDR"
+  },
+  {
+    "table": "Product",
+    "keyColumn": "ProductCode",
+    "keyValue": "PRD-MBA13",
+    "column": "ProductName",
+    "correctValue": "MacBook Air 13 M3"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "MBA13-M3-8-256",
+    "column": "VariantName",
+    "correctValue": "Bạc Ánh Sao 8GB/256GB"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "MBA13-M3-8-256",
+    "column": "Specs",
+    "correctValue": "Apple M3 8-core CPU, 8-core GPU, Retina 13.6 inch"
+  },
+  {
+    "table": "Product",
+    "keyColumn": "ProductCode",
+    "keyValue": "PRD-DELLXPS13",
+    "column": "ProductName",
+    "correctValue": "Dell XPS 13 Plus 9320"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "XPS13-I7-16-512",
+    "column": "VariantName",
+    "correctValue": "Bạch Kim i7/16GB/512GB"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "XPS13-I7-16-512",
+    "column": "Specs",
+    "correctValue": "Core i7-1360P, 16GB LPDDR5, 13.4 inch 3.5K OLED Touch"
+  },
+  {
+    "table": "Product",
+    "keyColumn": "ProductCode",
+    "keyValue": "PRD-DELLG15",
+    "column": "ProductName",
+    "correctValue": "Dell Gaming G15 5530"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "G15-I7-16-512-RTX4060",
+    "column": "VariantName",
+    "correctValue": "Xám Đậm i7/16GB/RTX4060"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "G15-I7-16-512-RTX4060",
+    "column": "Specs",
+    "correctValue": "Core i7-13650HX, RTX 4060 8GB, 15.6 inch FHD 165Hz"
+  },
+  {
+    "table": "Product",
+    "keyColumn": "ProductCode",
+    "keyValue": "PRD-ASUSROG",
+    "column": "ProductName",
+    "correctValue": "Asus ROG Strix G16"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "ROG-G16-I9-16-1TB",
+    "column": "VariantName",
+    "correctValue": "Eclipse Gray i9/16GB/1TB"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "ROG-G16-I9-16-1TB",
+    "column": "Specs",
+    "correctValue": "Core i9-14900HX, RTX 4060 8GB, 16 inch QHD+ 240Hz"
+  },
+  {
+    "table": "Product",
+    "keyColumn": "ProductCode",
+    "keyValue": "PRD-ASUSZEN",
+    "column": "ProductName",
+    "correctValue": "Asus Zenbook 14 OLED"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "ZEN14-U7-16-1TB",
+    "column": "VariantName",
+    "correctValue": "Ponder Blue Ultra 7/16GB"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "ZEN14-U7-16-1TB",
+    "column": "Specs",
+    "correctValue": "Intel Core Ultra 7 155H, 14 inch 3K OLED 120Hz"
+  },
+  {
+    "table": "Product",
+    "keyColumn": "ProductCode",
+    "keyValue": "PRD-IPADAIR",
+    "column": "ProductName",
+    "correctValue": "iPad Air 11 M2 Wi-Fi"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "IPADAIR-M2-128-BLU",
+    "column": "VariantName",
+    "correctValue": "Xanh Blue 128GB"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "IPADAIR-M2-128-BLU",
+    "column": "Specs",
+    "correctValue": "Apple M2 chip, Liquid Retina 11 inch, Apple Pencil Pro support"
+  },
+  {
+    "table": "Product",
+    "keyColumn": "ProductCode",
+    "keyValue": "PRD-IPADPRO",
+    "column": "ProductName",
+    "correctValue": "iPad Pro 11 M4 OLED"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "IPADPRO-M4-256-SLV",
+    "column": "VariantName",
+    "correctValue": "Bạc 256GB"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "IPADPRO-M4-256-SLV",
+    "column": "Specs",
+    "correctValue": "Apple M4 chip, Ultra Retina XDR OLED, siêu mỏng 5.3mm"
+  },
+  {
+    "table": "Product",
+    "keyColumn": "ProductCode",
+    "keyValue": "PRD-SSTABS9",
+    "column": "ProductName",
+    "correctValue": "Samsung Galaxy Tab S9"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "TABS9-128-BEI",
+    "column": "VariantName",
+    "correctValue": "Kem Beige 128GB"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "TABS9-128-BEI",
+    "column": "Specs",
+    "correctValue": "Dynamic AMOLED 2X 11 inch 120Hz, S-Pen kèm máy, IP68"
+  },
+  {
+    "table": "Product",
+    "keyColumn": "ProductCode",
+    "keyValue": "PRD-SONYWH",
+    "column": "ProductName",
+    "correctValue": "Sony WH-1000XM5"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "SONY-WH1000XM5-BLK",
+    "column": "VariantName",
+    "correctValue": "Đen ANC Cao Cấp"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "SONY-WH1000XM5-BLK",
+    "column": "Specs",
+    "correctValue": "Chống ồn đỉnh cao Auto NC Optimizer, 30h pin, LDAC"
+  },
+  {
+    "table": "Product",
+    "keyColumn": "ProductCode",
+    "keyValue": "PRD-SONYWF",
+    "column": "ProductName",
+    "correctValue": "Sony WF-1000XM5"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "SONY-WF1000XM5-SLV",
+    "column": "VariantName",
+    "correctValue": "Bạc True Wireless ANC"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "SONY-WF1000XM5-SLV",
+    "column": "Specs",
+    "correctValue": "2 chip xử lý V2 & QN2e, màng loa Dynamic Driver X, IPX4"
+  },
+  {
+    "table": "Product",
+    "keyColumn": "ProductCode",
+    "keyValue": "PRD-APPODSPRO",
+    "column": "ProductName",
+    "correctValue": "AirPods Pro 2 USB-C"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "APPODS-PRO2-USBC",
+    "column": "VariantName",
+    "correctValue": "Trắng MagSafe USB-C"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "APPODS-PRO2-USBC",
+    "column": "Specs",
+    "correctValue": "Chip Apple H2, Chủ động khử tiếng ồn 2x, Adaptive Audio"
+  },
+  {
+    "table": "Product",
+    "keyColumn": "ProductCode",
+    "keyValue": "PRD-DELLU27",
+    "column": "ProductName",
+    "correctValue": "Dell UltraSharp U2724D"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "DELL-U2724D-2K120",
+    "column": "VariantName",
+    "correctValue": "Bạc 27 inch 2K 120Hz"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "DELL-U2724D-2K120",
+    "column": "Specs",
+    "correctValue": "27 inch QHD (2560x1440), IPS Black, 120Hz, 100% sRGB & 98% DCI-P3"
+  },
+  {
+    "table": "Product",
+    "keyColumn": "ProductCode",
+    "keyValue": "PRD-ASUSVG27",
+    "column": "ProductName",
+    "correctValue": "Asus TUF Gaming VG279QL3A"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "ASUS-VG27-FHD180",
+    "column": "VariantName",
+    "correctValue": "Đen 27 inch FHD 180Hz"
+  },
+  {
+    "table": "ProductVariant",
+    "keyColumn": "SKU",
+    "keyValue": "ASUS-VG27-FHD180",
+    "column": "Specs",
+    "correctValue": "27 inch Fast IPS, FHD, 180Hz, 1ms GtG, ELMB Sync, DisplayHDR 400"
+  },
+  {
+    "table": "Warehouse",
+    "keyColumn": "WarehouseCode",
+    "keyValue": "WH-HN-01",
+    "column": "WarehouseName",
+    "correctValue": "Kho Tổng Hà Nội"
+  },
+  {
+    "table": "Warehouse",
+    "keyColumn": "WarehouseCode",
+    "keyValue": "WH-HN-01",
+    "column": "Address",
+    "correctValue": "Số 1 Trịnh Văn Bô, Nam Từ Liêm, Hà Nội"
+  },
+  {
+    "table": "StorageSectionType",
+    "keyColumn": "Id",
+    "keyValue": "1",
+    "column": "Description",
+    "correctValue": "Khu vực lưu kho tiêu chuẩn"
+  },
+  {
+    "table": "StorageSection",
+    "keyColumn": "Id",
+    "keyValue": "1",
+    "column": "SectionName",
+    "correctValue": "Khu Nhập & Lưu kho A"
+  },
+  {
+    "table": "StorageBin",
+    "keyColumn": "BinCode",
+    "keyValue": "BIN-A1-01",
+    "column": "BinName",
+    "correctValue": "Vị trí lưu kho A1-01"
+  },
+  {
+    "table": "StorageBin",
+    "keyColumn": "BinCode",
+    "keyValue": "BIN-A1-02",
+    "column": "BinName",
+    "correctValue": "Vị trí lưu kho A1-02"
+  },
+  {
+    "table": "StorageBin",
+    "keyColumn": "BinCode",
+    "keyValue": "BIN-A1-03",
+    "column": "BinName",
+    "correctValue": "Vị trí lưu kho A1-03"
+  },
+  {
+    "table": "StorageBin",
+    "keyColumn": "BinCode",
+    "keyValue": "BIN-A1-04",
+    "column": "BinName",
+    "correctValue": "Vị trí lưu kho A1-04"
+  },
+  {
+    "table": "StorageBin",
+    "keyColumn": "BinCode",
+    "keyValue": "BIN-A1-05",
+    "column": "BinName",
+    "correctValue": "Vị trí lưu kho A1-05"
+  },
+  {
+    "table": "StorageBin",
+    "keyColumn": "BinCode",
+    "keyValue": "BIN-A1-06",
+    "column": "BinName",
+    "correctValue": "Vị trí lưu kho A1-06"
+  },
+  {
+    "table": "StorageBin",
+    "keyColumn": "BinCode",
+    "keyValue": "BIN-A1-07",
+    "column": "BinName",
+    "correctValue": "Vị trí lưu kho A1-07"
+  },
+  {
+    "table": "StorageBin",
+    "keyColumn": "BinCode",
+    "keyValue": "BIN-A1-08",
+    "column": "BinName",
+    "correctValue": "Vị trí lưu kho A1-08"
+  },
+  {
+    "table": "StorageBin",
+    "keyColumn": "BinCode",
+    "keyValue": "BIN-A1-09",
+    "column": "BinName",
+    "correctValue": "Vị trí lưu kho A1-09"
+  },
+  {
+    "table": "StorageBin",
+    "keyColumn": "BinCode",
+    "keyValue": "BIN-A1-10",
+    "column": "BinName",
+    "correctValue": "Vị trí lưu kho A1-10"
+  },
+  {
+    "table": "User",
+    "keyColumn": "UserName",
+    "keyValue": "admin",
+    "column": "FullName",
+    "correctValue": "Quản trị viên hệ thống"
+  },
+  {
+    "table": "User",
+    "keyColumn": "UserName",
+    "keyValue": "manager",
+    "column": "FullName",
+    "correctValue": "Quản lý kho (Nguyễn Văn Quản)"
+  },
+  {
+    "table": "User",
+    "keyColumn": "UserName",
+    "keyValue": "purchasing",
+    "column": "FullName",
+    "correctValue": "Trưởng phòng Mua hàng (Trần Thị Mua)"
+  },
+  {
+    "table": "User",
+    "keyColumn": "UserName",
+    "keyValue": "staff",
+    "column": "FullName",
+    "correctValue": "Nhân viên kho (Lê Văn Kho)"
+  },
+  {
+    "table": "User",
+    "keyColumn": "UserName",
+    "keyValue": "sales",
+    "column": "FullName",
+    "correctValue": "Nhân viên bán hàng (Phạm Văn Bán)"
+  }
+]

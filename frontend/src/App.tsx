@@ -4,7 +4,7 @@ import GoodsReceiptWorkspace from "./features/goods-receipts/GoodsReceiptWorkspa
 import LoginPage from "./features/auth/LoginPage";
 import ProfilePage from "./features/auth/ProfilePage";
 import { getCurrentUser, logout, notifyAuthChanged } from "./features/auth/auth.api";
-import { homeForRole, roleLabel, rolePrefix, type AuthUser } from "./features/auth/auth.types";
+import { displayUserName, homeForRole, roleLabel, rolePrefix, type AuthUser } from "./features/auth/auth.types";
 import { ApiError, resetCsrfToken } from "./api/http";
 import useAppRoute, { navigateTo } from "./hooks/useAppRoute";
 import "./features/goods-receipts/goodsReceipt.css";
@@ -105,9 +105,9 @@ export default function App() {
         if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
         event.preventDefault(); if (!busy) navigateTo(link.path);
       }}>{link.label}</a>)}</nav>
-      <div className="app-sidebar-footer"><span className="app-live-dot" /><div><strong>{user.fullName}</strong><p>{user.userName}</p><button className="gr-text-button" disabled={busy} onClick={() => void signOut()}>Đăng xuất</button></div></div>
+      <div className="app-sidebar-footer"><span className="app-live-dot" /><div><strong>{displayUserName(user)}</strong><p>{user.userName}</p><button className="gr-text-button" disabled={busy} onClick={() => void signOut()}>Đăng xuất</button></div></div>
     </aside>
-    <div className="app-main"><header className="portal-topbar"><div><small>KHÔNG GIAN LÀM VIỆC</small><strong>{roleLabel(user.role)}</strong></div><div className="gr-user-label"><span className="gr-avatar">{user.fullName.slice(0, 1).toUpperCase()}</span><span><strong>{user.fullName}</strong><small>{user.warehouseIds.length} kho được phân công</small></span><button className="gr-button gr-button--quiet portal-logout" disabled={busy} onClick={() => void signOut()}>Đăng xuất</button></div></header>
+    <div className="app-main"><header className="portal-topbar"><div><small>KHÔNG GIAN LÀM VIỆC</small><strong>{roleLabel(user.role)}</strong></div><div className="gr-user-label"><span className="gr-avatar">{displayUserName(user).slice(0, 1).toUpperCase()}</span><span><strong>{displayUserName(user)}</strong><small>{user.warehouseIds.length} kho được phân công</small></span><button className="gr-button gr-button--quiet portal-logout" disabled={busy} onClick={() => void signOut()}>Đăng xuất</button></div></header>
       <main id="main-content" tabIndex={-1} className="gr-content gr-workspace" key={user.userId}>{renderPage()}</main>
     </div>
   </div>;

@@ -4,9 +4,6 @@ using EWMS.Api.Entities;
 using EWMS.Api.DTOs.InboundRequests;
 using EWMS.Api.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace EWMS.Api.Repositories
 {
@@ -54,27 +51,6 @@ namespace EWMS.Api.Repositories
                         UserId = x.UserId, FullName = x.User.FullName, WarehouseId = x.WarehouseId
                     }).ToListAsync()
             };
-        }
-
-        // Task 1: Check Warehouse
-        public async Task<bool> WarehouseExistsAsync(int warehouseId)
-        {
-            return await _context.Warehouses
-                .AnyAsync(w => w.Id == warehouseId);
-        }
-
-        // Task 1: Check Product Variant
-        public async Task<bool> ProductVariantExistsAsync(int productVariantId)
-        {
-            return await _context.ProductVariants
-                .AnyAsync(p => p.Id == productVariantId);
-        }
-
-        // Task 1: Check User
-        public async Task<bool> UserExistsAsync(int userId)
-        {
-            return await _context.Users
-                .AnyAsync(u => u.Id == userId);
         }
 
         // Task 1: Create Inbound Request
@@ -136,20 +112,6 @@ namespace EWMS.Api.Repositories
                 .Where(item => item.InboundRequestId == inboundRequestId)
                 .OrderBy(item => item.Id)
                 .ToListAsync();
-        }
-
-        // Task 4: Update Inbound Request
-        public async Task UpdateAsync(InboundRequest request)
-        {
-            _context.InboundRequests.Update(request);
-            await _context.SaveChangesAsync();
-        }
-
-        // Task 4: Check if Supplier exists
-        public async Task<bool> SupplierExistsAsync(int supplierId)
-        {
-            return await _context.Suppliers
-                .AnyAsync(s => s.Id == supplierId);
         }
 
         public Task<InboundRequest?> GetForUpdateAsync(int id) =>

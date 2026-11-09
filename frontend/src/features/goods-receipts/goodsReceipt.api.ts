@@ -1,17 +1,13 @@
 import type {
   BinAssignment, GoodsReceipt, ReceivableInbound, ReceiptBin,
-  ReceiptList, ReceiptSerial, ReceiptSession,
+  ReceiptList, ReceiptSerial,
 } from "./goodsReceipt.types";
 
 import { apiRequest } from "../../api/http";
-export { ApiError as ReceiptApiError } from "../../api/http";
 function requestApi<T>(path: string, method = "GET", body?: object) {
   return apiRequest<T>(`/api/goods-receipts${path}`, method, body);
 }
 
-export function getReceiptSession() {
-  return requestApi<ReceiptSession>("/session");
-}
 export function getGoodsReceipts(query: string) {
   const params = new URLSearchParams(query);
   // ReceivedDate lưu UTC. Chuyển ngày trên màn hình sang UTC trước khi lọc server.

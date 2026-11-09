@@ -22,6 +22,7 @@ namespace EWMS.Api.DTOs.GoodsReceipts
         public int Id { get; set; }
         public int ProductVariantId { get; set; }
         public string SKU { get; set; } = string.Empty;
+        public string ProductName { get; set; } = string.Empty;
         public int? BinId { get; set; }
         public int ReceivedQty { get; set; }
         public int ExpectedQty { get; set; }

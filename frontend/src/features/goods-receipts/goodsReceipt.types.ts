@@ -21,6 +21,7 @@ export interface ReceiptItem {
   id: number;
   productVariantId: number;
   sku: string;
+  productName?: string;
   binId: number | null;
   receivedQty: number;
   expectedQty: number;
@@ -65,6 +66,7 @@ export interface ReceiptList {
 export interface ReceivingLine {
   productVariantId: number;
   sku: string;
+  productName?: string;
   expectedQty: number;
   receivedQty: number;
   remainingQty: number;

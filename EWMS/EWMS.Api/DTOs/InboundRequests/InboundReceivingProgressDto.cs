@@ -1,5 +1,4 @@
 ﻿
-using System.Collections.Generic;
 
 namespace EWMS.Api.DTOs.InboundRequests
 {

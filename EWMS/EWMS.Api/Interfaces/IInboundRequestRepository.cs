@@ -1,7 +1,5 @@
 ﻿using EWMS.Api.Entities;
-using System.Collections.Generic;
 using EWMS.Api.DTOs.InboundRequests;
-using System.Threading.Tasks;
 
 namespace EWMS.Api.Interfaces
 {
@@ -16,18 +14,8 @@ namespace EWMS.Api.Interfaces
             InboundRequest request,
             List<InboundRequestItem> items);
 
-        Task<bool> WarehouseExistsAsync(int warehouseId);
-
-        Task<bool> ProductVariantExistsAsync(int productVariantId);
-
-        Task<bool> UserExistsAsync(int userId);
-
         Task<List<InboundRequestItem>> GetItemsByRequestIdAsync(
             int inboundRequestId);
-        Task UpdateAsync(InboundRequest request);
-
-        Task<bool> SupplierExistsAsync(int supplierId);
-
         Task<InboundRequest?> GetForUpdateAsync(int id);
         Task<List<InboundRequestItem>> LoadItemsAsync(int requestId, bool tracking);
         Task<string?> GetUserNameAsync(int userId);

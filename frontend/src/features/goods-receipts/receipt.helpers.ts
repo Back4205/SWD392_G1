@@ -1,4 +1,4 @@
-import { ReceiptApiError } from "./goodsReceipt.api";
+import { ApiError } from "../../api/http";
 import type { ReceiptStatus } from "./goodsReceipt.types";
 
 export const statusLabels: Record<ReceiptStatus, string> = {
@@ -31,12 +31,12 @@ const messages: Record<string, string> = {
 };
 
 export function receiptErrorMessage(error: unknown) {
-  if (error instanceof ReceiptApiError) return messages[error.code] || error.message;
+  if (error instanceof ApiError) return messages[error.code] || error.message;
   return error instanceof Error ? error.message : "Có lỗi xảy ra. Hãy thử lại.";
 }
 
 export function isStaleReceipt(error: unknown) {
-  return error instanceof ReceiptApiError && ["GR_STALE_VERSION", "GR_CONCURRENT_WRITE", "GR_STATE"].includes(error.code);
+  return error instanceof ApiError && ["GR_STALE_VERSION", "GR_CONCURRENT_WRITE", "GR_STATE"].includes(error.code);
 }
 
 export function formatReceiptDate(value: string) {

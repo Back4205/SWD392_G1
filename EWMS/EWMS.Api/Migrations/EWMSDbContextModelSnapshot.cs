@@ -95,7 +95,7 @@ namespace EWMS.Api.Migrations
 
                     b.Property<string>("CategoryName")
                         .IsRequired()
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int?>("ParentId")
                         .HasColumnType("int");
@@ -654,7 +654,7 @@ namespace EWMS.Api.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("PermissionName")
                         .IsRequired()
@@ -693,7 +693,7 @@ namespace EWMS.Api.Migrations
 
                     b.Property<string>("ProductName")
                         .IsRequired()
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -764,10 +764,10 @@ namespace EWMS.Api.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Specs")
-                        .HasColumnType("varchar(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("VariantName")
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int?>("WarrantyMonths")
                         .HasColumnType("int");
@@ -794,7 +794,7 @@ namespace EWMS.Api.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("RoleName")
                         .IsRequired()
@@ -962,7 +962,7 @@ namespace EWMS.Api.Migrations
 
                     b.Property<string>("BinName")
                         .IsRequired()
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal>("MaxWeightKg")
                         .HasColumnType("decimal(10,2)");
@@ -1031,7 +1031,7 @@ namespace EWMS.Api.Migrations
 
                     b.Property<string>("SectionName")
                         .IsRequired()
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("StorageSectionTypeId")
                         .HasColumnType("int");
@@ -1057,7 +1057,7 @@ namespace EWMS.Api.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("TypeCode")
                         .IsRequired()
@@ -1080,11 +1080,11 @@ namespace EWMS.Api.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Address")
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("ContactPerson")
                         .IsRequired()
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Email")
                         .HasColumnType("varchar(100)");
@@ -1102,7 +1102,7 @@ namespace EWMS.Api.Migrations
 
                     b.Property<string>("SupplierName")
                         .IsRequired()
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
@@ -1246,7 +1246,7 @@ namespace EWMS.Api.Migrations
 
                     b.Property<string>("FullName")
                         .IsRequired()
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -1305,7 +1305,7 @@ namespace EWMS.Api.Migrations
 
                     b.Property<string>("Address")
                         .IsRequired()
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<decimal>("Area")
                         .HasColumnType("decimal(12,2)");
@@ -1332,7 +1332,7 @@ namespace EWMS.Api.Migrations
 
                     b.Property<string>("WarehouseName")
                         .IsRequired()
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 

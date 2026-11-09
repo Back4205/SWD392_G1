@@ -1,5 +1,4 @@
 ﻿
-using System;
 
 namespace EWMS.Api.DTOs.InboundRequests
 {
